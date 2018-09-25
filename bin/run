@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Runs the project from source.
+# In production you may wish to use the uberjar instead.
+#
+# Ex:
+#
+#     java -jar uberjar.jar
+
+clojure -m reaction.cart.main

@@ -1,0 +1,14 @@
+---
+version: '3'
+
+services:
+
+  # The main service and API.
+  web:
+    build:
+      context: .
+    command: bin/run
+    env_file:
+      - ./.env
+    volumes:
+      - .:/usr/src/app

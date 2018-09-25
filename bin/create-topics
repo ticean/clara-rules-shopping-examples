@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Creates Kafka topics from harcoded configuration.
+
+__dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+docker_image=confluentinc/cp-enterprise-kafka:4.1.1
+network=streams.reaction.localhost
+zookeeper=zookeeper.streams.reaction.localhost:2181
+replication_factor=1 # Assume 1 for localhost. Set higher in production.
+partitions=3 # Set >1 to test partitioning locally.
+
+docker run \
+  --rm \
+  --network "${network}" \
+  --volume "${__dir}/wait-for-it.sh:/usr/local/bin/wait-for-it.sh" \
+  "${docker_image}" \
+    /usr/local/bin/wait-for-it.sh "${zookeeper}" -t 30 -- \
+      kafka-topics --create \
+        --topic reaction.cart.sum-events.gen1 \
+        --if-not-exists \
+        --partitions "${partitions}" \
+        --replication-factor "${replication_factor}" \
+        --zookeeper "${zookeeper}"
+
+docker run \
+  --rm \
+  --network "${network}" \
+  --volume "${__dir}/wait-for-it.sh:/usr/local/bin/wait-for-it.sh" \
+  "${docker_image}" \
+    /usr/local/bin/wait-for-it.sh "${zookeeper}" -t 30 -- \
+      kafka-topics --create \
+        --topic reaction.cart.sum-aggregates.gen1 \
+        --config "cleanup.policy=compact" \
+        --if-not-exists \
+        --partitions "${partitions}" \
+        --replication-factor 1 \
+        --zookeeper "${zookeeper}"
