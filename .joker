@@ -1,3 +1,3 @@
-{:known-macros [mercury.kafka.streams/aggregator
-                mercury.kafka.streams/initializer]
+{:known-macros [clara.rules/defrule
+                clara.rules/defquery]
  :rules {:if-without-else true}}
