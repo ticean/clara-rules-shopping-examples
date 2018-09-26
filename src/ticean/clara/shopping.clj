@@ -1,43 +1,46 @@
 (ns ticean.clara.shopping
   (:require
     [clara.rules.accumulators :as acc]
-    [clara.rules :refer :all]))
+    [clara.rules :refer [defquery defrule fire-rules insert insert!
+                         mk-session query]]))
 
 
 ;;;; Facts used in the examples below.
 
 (defrecord Order [year month day])
 (defrecord Customer [status])
-(defrecord Purchase [cost item])
-(defrecord Discount [reason percent])
-(defrecord Total [total])
+(defrecord Discount [code name description type value])
 (defrecord Promotion [reason type])
+(defrecord OrderLineItem [sku cost])
+(defrecord OrderTotal [total])
+
 
 ;;;; Some example rules. ;;;;
 
 (defrule total-purchases
-  [?total <- (acc/sum :cost) :from [Purchase]]
+  [?total <- (acc/sum :cost) :from [OrderLineItem]]
   =>
-  (insert! (->Total ?total)))
+  (insert! (->OrderTotal ?total)))
 
-;;; Discounts.
+;;;Discounts.
 (defrule summer-special
   "Place an order in the summer and get 20% off!"
   [Order (#{:june :july :august} month)]
   =>
-  (insert! (->Discount :summer-special 20)))
+  (insert! (->Discount :summer-special "Summer special." "" :percent 20)))
 
 (defrule vip-discount
   "VIPs get a discount on purchases over $100. Cannot be combined with any
   other discount."
   [Customer (= status :vip)]
-  [Total (> total 100)]
+  [OrderTotal (> total 100)]
   =>
-  (insert! (->Discount :vip 10)))
+  (insert! (->Discount :vip "VIP Discount" "" :percent 10)))
 
 (def max-discount
   "Accumulator that returns the highest percentage discount."
-  (acc/max :percent :returns-fact true))
+  ;; Note that this currently assumes percent!!
+  (acc/max :value :returns-fact true))
 
 (defquery get-best-discount
   "Query to find the best discount that can be applied"
@@ -48,13 +51,13 @@
 (defrule free-widget-month
   "All purchases over $200 in August get a free widget."
   [Order (= :august month)]
-  [Total (> total 200)]
+  [OrderTotal (> total 200)]
   =>
   (insert! (->Promotion :free-widget-month :widget)))
 
 (defrule free-lunch-with-gizmo
   "Anyone who purchases a gizmo gets a free lunch."
-  [Purchase (= item :gizmo)]
+  [OrderLineItem (= sku :gizmo)]
   =>
   (insert! (->Promotion :free-lunch-with-gizmo :lunch)))
 
@@ -63,50 +66,45 @@
   []
   [?promotion <- Promotion])
 
+
 ;;;; The section below shows this example in action. ;;;;
 
 (defn print-discounts!
   "Print the discounts from the given session."
   [session]
-
-  ;; Destructure and print each discount.
-  (doseq [{{reason :reason percent :percent} :?discount}
-          (query session get-best-discount)]
-    (println percent "%" reason "discount???"))
-
+  (println "Printing Discounts:")
+  (doseq [{discount :?discount} (query session get-best-discount)]
+    (println "   " discount))
   session)
 
 (defn print-promotions!
   "Prints promotions from the given session"
   [session]
-  (doseq [{{reason :reason type :type} :?promotion}
-          (query session get-promotions)]
-    (println "Free" type "for promotion" reason))
+  (println "Printing Promotions:")
+  (doseq [{promotion :?promotion} (query session get-promotions)]
+    (println "   " promotion))
   session)
 
 (defn run-examples
   "Function to run the above example."
   []
-  (println "VIP shopping example:")
-  ;; prints "10 % :vip discount"
-  (-> (mk-session 'clara.examples.shopping :cache false) ; Load the rules.
+  (println "\nStarting Clara session 1.")
+  (-> (mk-session 'ticean.clara.shopping :cache false)
       (insert (->Customer :vip)
               (->Order 2013 :march 20)
-              (->Purchase 20 :gizmo)
-              (->Purchase 120 :widget))
+              (->OrderLineItem :gizmo 20)
+              (->OrderLineItem :widget 20))
+
       (fire-rules)
       (print-discounts!))
 
-  (println "Summer special and widget promotion example:")
-  ;; prints: "20 % :summer-special discount"
-  ;;         "Free :lunch for promotion :free-lunch-for-gizmo"
-  ;;         "Free :widget for promotion :free-widget-month"
-  (-> (mk-session 'clara.examples.shopping) ; Load the rules.
-      (insert (->Customer :vip)
+  (println "\nStarting Clara session 2.")
+  (-> (mk-session 'ticean.clara.shopping)
+      (insert (->Customer :not-vip)
               (->Order 2013 :august 20)
-              (->Purchase 20 :gizmo)
-              (->Purchase 120 :widget)
-              (->Purchase 90 :widget))
+              (->OrderLineItem :gizmo 20)
+              (->OrderLineItem :widget 120)
+              (->OrderLineItem :widget 90))
       (fire-rules)
       (print-discounts!)
       (print-promotions!))
