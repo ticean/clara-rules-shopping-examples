@@ -15,7 +15,7 @@
 (defrecord OrderTotal [total])
 
 (defrecord Discount [code name description type value])
-(defrecord Promotion [reason type])
+(defrecord Promotion [code name description type config])
 
 
 ;;;; Some example rules. ;;;;
@@ -71,13 +71,21 @@
   [Order (= :august month)]
   [OrderTotal (> total 200)]
   =>
-  (insert! (->Promotion :free-widget-month :widget)))
+  (insert! (->Promotion :free-widget-month
+                        "Free Widget Month"
+                        "All purchases over $200 in August get a free widget."
+                        :free-item
+                        {:free-item-sku :widget})))
 
 (defrule free-lunch-with-gizmo
   "Anyone who purchases a gizmo gets a free lunch."
   [OrderLineItem (= sku :gizmo)]
   =>
-  (insert! (->Promotion :free-lunch-with-gizmo :lunch)))
+  (insert! (->Promotion :free-lunch-with-gizmo
+                        "Free Lunch with Gizmo"
+                        "Anyone who purchases a gizmo gets a free lunch."
+                        :free-item
+                        {:free-item-sku :lunch})))
 
 (defquery get-promotions
   "Query to find promotions for the purchase."
@@ -117,7 +125,6 @@
               (->Order 2018 :july 20)
               (->OrderLineItem :gizmo 20)
               (->OrderLineItem :widget 120))
-
       (fire-rules)
       (print-discounts!))
 
