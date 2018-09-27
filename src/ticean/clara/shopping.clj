@@ -9,13 +9,14 @@
 ;;;; Facts used in the examples below.
 
 (defrecord Customer [status])
-(defrecord Order [year month day])
+(defrecord Order [year month day shipping-address])
 (defrecord OrderPromoCode [code])
-(defrecord OrderLineItem [sku cost])
+(defrecord OrderLineItem [sku cost attributes])
 (defrecord OrderTotal [total])
 
 (defrecord Discount [code name description type value])
 (defrecord Promotion [code name description type config])
+(defrecord ShippingRestriction [sku code description])
 
 
 ;;;; Some example rules. ;;;;
@@ -93,6 +94,32 @@
   [?promotion <- Promotion])
 
 
+;;; Shipping restrictions.
+
+(defrule noship-flammables
+  [OrderLineItem (true? (:flammable? attributes)) (= ?sku sku)]
+  =>
+  (insert! (->ShippingRestriction
+             ?sku
+             :flammable
+             "Flammable and hazardous materials are pickup-only.")))
+
+(defrule noship-alcohol
+  [OrderLineItem (true? (:alcohol? attributes)) (= ?sku sku)]
+  [Order [{{state :state} :shipping-address}]
+         (#{"AL" "OK" "UT"} state) (= ?state state)]
+  =>
+  (insert! (->ShippingRestriction
+             ?sku
+             :alcohol-shipping-restriction
+             (str "Alcohol cannot be shipped to " ?state "."))))
+
+(defquery get-shipping-restrictions
+  "Query to find shipping restrictions for the purchase."
+  []
+  [?shipping-restriction <- ShippingRestriction])
+
+
 ;;;; The section below shows this example in action. ;;;;
 
 (defn print-discounts!
@@ -113,32 +140,47 @@
     (println "   " promotion))
   session)
 
+(defn print-shipping-restrictions!
+  "Prints shipping restrictions from the given session"
+  [session]
+  (println "Printing Shipping Restrictions:")
+  (doseq [{restriction :?shipping-restriction}
+          (query session get-shipping-restrictions)]
+    (println "   " restriction))
+  session)
+
 (defn run-examples
   "Function to run the above example."
   []
 
   (println "\nStarting Clara session 1.")
   (println "   Expects :summer-discount and and :vip-discount.")
-  (println "   Expects no promotions.\n")
+  (println "   Expects :free-lunch-with-gizmo promotion.\n")
+  (println "   Expects :alcohol shipping restriction\n")
   (-> (mk-session 'ticean.clara.shopping :cache false)
       (insert (->Customer :vip)
-              (->Order 2018 :july 20)
-              (->OrderLineItem :gizmo 20)
-              (->OrderLineItem :widget 120))
+              (->Order 2018 :july 20 {:state "AL"})
+              (->OrderLineItem :gizmo 20 {})
+              (->OrderLineItem :widget 120 {})
+              (->OrderLineItem :wine 120 {:alcohol? true}))
       (fire-rules)
-      (print-discounts!))
+      (print-discounts!)
+      (print-promotions!)
+      (print-shipping-restrictions!))
 
   (println "\nStarting Clara session 2.")
   (println "   Expects :summer-discount.\n")
   (println "   Expects :free-widget-month and :free-lunch-with-gizmo.\n")
-  (-> (mk-session 'ticean.clara.shopping :cache false)
-      (insert (->Customer :not-vip)
-              (->Order 2018 :august 20)
-              (->OrderLineItem :gizmo 20)
-              (->OrderLineItem :widget 120)
-              (->OrderLineItem :widget 90))
-      (fire-rules)
-      (print-discounts!)
-      (print-promotions!))
+  (println "   Expects :flammable shipping restriction\n"
+    (-> (mk-session 'ticean.clara.shopping :cache false)
+        (insert (->Customer :not-vip)
+                (->Order 2018 :august 20 {})
+                (->OrderLineItem :gizmo 20 {})
+                (->OrderLineItem :widget 120 {})
+                (->OrderLineItem :fizzbuzz 90 {:flammable? true}))
+        (fire-rules)
+        (print-discounts!)
+        (print-promotions!)
+        (print-shipping-restrictions!)))
 
   nil)
