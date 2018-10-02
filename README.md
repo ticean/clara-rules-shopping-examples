@@ -1,42 +1,62 @@
-# clara
+# clara shopping examples
 
-Demo project to test the Clara rules engine for fitness in Reaction Commerce.
+Extended shopping logic examples from Clara Rules.
 
-## Installation
+Adds modifications to the original examples to provide more detail and make it
+real-world.
 
-Download from http://example.com/FIXME.
+The original examples can be found at https://github.com/cerner/clara-examples
 
 ## Usage
 
-FIXME: explanation
+The project contains interactive Clara Rules examples that are intended to run
+from the REPL.
 
-Run the project directly:
+Example, from REPL:
 
-    $ clj -m ticean.clara
+```clojure
+(require '[ticean.clara.shopping :as s])
+(s/run-examples)
+```
 
-Run the project's tests (they'll fail until you edit them):
+### The REPL Environment
 
-    $ clj -A:test:runner
+To begin developing, start with a REPL.
 
-## Options
+```sh
+docker-compose run --rm --service-ports web bin/dev
+```
 
-FIXME: listing of options this app accepts.
+Then load the development namespace.
 
-## Examples
+```clojure
+user=> (dev)
+:loaded
+```
 
-...
+### Reloading Code in the REPL
 
-### Bugs
+When you make changes to your source files, use `refresh` to reload any
+modified files.
 
-...
+```clojure
+dev=> (refresh)
+:loaded
+```
 
-### Any Other Sections
-### That You Think
-### Might be Useful
 
 ## License
 
-Copyright © 2018 FIXME
+Copyright 2016 Cerner Innovation, Inc.  
+Copyright 2018 Ticean Bennett
 
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this file except in compliance with the License. You may obtain a copy of the
+License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed
+under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
+CONDITIONS OF ANY KIND, either express or implied. See the License for the
+specific language governing permissions and limitations under the License.
