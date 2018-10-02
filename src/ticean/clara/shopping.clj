@@ -1,5 +1,9 @@
 (ns ticean.clara.shopping
-  "Demonstration of Clara rules applied to a commerce application."
+  "Demonstration of Clara rules applied to a commerce application.
+
+  This is extended from the Clara examples.
+  https://github.com/cerner/clara-examples
+  "
   (:require
     [clara.rules.accumulators :as acc]
     [clara.rules :refer [defquery defrule fire-rules insert insert!
