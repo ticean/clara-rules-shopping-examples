@@ -9,6 +9,7 @@
         :extra-deps {duct/core {:mvn/version "0.6.2"}
                      expound {:mvn/version "0.7.1"}
                      fipp {:mvn/version "0.6.12"}
+                     instaparse {:mvn/version "1.4.9"}
                      integrant/repl {:mvn/version "0.2.0"}}}
 
   ;; List dependencies that have new available versions.
