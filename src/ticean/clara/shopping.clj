@@ -16,7 +16,7 @@
 (defrecord Order [year month day shipping-address])
 (defrecord OrderPromoCode [code])
 (defrecord OrderLineItem [sku cost attributes])
-(defrecord OrderTotal [total])
+(defrecord OrderTotal [value])
 
 (defrecord Discount [code name description type value])
 (defrecord Promotion [code name description type config])
@@ -26,32 +26,32 @@
 ;;;; Some example rules. ;;;;
 
 (defrule order-total
-  [?total <- (acc/sum :cost) :from [OrderLineItem]]
+  [?value <- (acc/sum :cost) :from [OrderLineItem]]
   =>
-  (insert! (->OrderTotal ?total)))
+  (insert! (->OrderTotal ?value)))
 
 
 ;;;Discounts.
 
-(defrule summer-discount
-  "Place an order in the summer and get 20% off!"
-  [Order (#{:june :july :august} month)]
-  =>
-  (insert! (->Discount :summer-discount
-                       "Summer discount."
-                       "Place an order in the summer and get 20% off."
-                       :percent 20)))
-
-(defrule vip-discount
-  "VIPs get a discount on purchases over $100. Cannot be combined with any
-  other discount."
-  [Customer (= status :vip)]
-  [OrderTotal (> total 100)]
-  =>
-  (insert! (->Discount :vip
-                       "VIP Discount"
-                       "VIPs get a 10% discount on purchases over $100."
-                       :percent 10)))
+;;(defrule summer-discount
+;;  "Place an order in the summer and get 20% off!"
+;;  [Order (#{:june :july :august} month)]
+;;  =>
+;;  (insert! (->Discount :summer-discount
+;;                       "Summer discount."
+;;                       "Place an order in the summer and get 20% off."
+;;                       :percent 20)))
+;;
+;;(defrule vip-discount
+;;  "VIPs get a discount on purchases over $100. Cannot be combined with any
+;;  other discount."
+;;  [Customer (= status :vip)]
+;;  [OrderTotal (> value 100)]
+;;  =>
+;;  (insert! (->Discount :vip
+;;                       "VIP Discount"
+;;                       "VIPs get a 10% discount on purchases over $100."
+;;                       :percent 10)))
 
 (def max-discount
   "Accumulator that returns the highest percentage discount."
@@ -71,26 +71,26 @@
 
 ;;; Promotions.
 
-(defrule free-widget-month
-  "All purchases over $200 in August get a free widget."
-  [Order (= :august month)]
-  [OrderTotal (> total 200)]
-  =>
-  (insert! (->Promotion :free-widget-month
-                        "Free Widget Month"
-                        "All purchases over $200 in August get a free widget."
-                        :free-item
-                        {:free-item-sku :widget})))
-
-(defrule free-lunch-with-gizmo
-  "Anyone who purchases a gizmo gets a free lunch."
-  [OrderLineItem (= sku :gizmo)]
-  =>
-  (insert! (->Promotion :free-lunch-with-gizmo
-                        "Free Lunch with Gizmo"
-                        "Anyone who purchases a gizmo gets a free lunch."
-                        :free-item
-                        {:free-item-sku :lunch})))
+;(defrule free-widget-month
+;  "All purchases over $200 in August get a free widget."
+;  [Order (= :august month)]
+;  [OrderTotal (> value 200)]
+;  =>
+;  (insert! (->Promotion :free-widget-month
+;                        "Free Widget Month"
+;                        "All purchases over $200 in August get a free widget."
+;                        :free-item
+;                        {:free-item-sku :widget})))
+;
+;(defrule free-lunch-with-gizmo
+;  "Anyone who purchases a gizmo gets a free lunch."
+;  [OrderLineItem (= sku :gizmo)]
+;  =>
+;  (insert! (->Promotion :free-lunch-with-gizmo
+;                        "Free Lunch with Gizmo"
+;                        "Anyone who purchases a gizmo gets a free lunch."
+;                        :free-item
+;                        {:free-item-sku :lunch})))
 
 (defquery get-promotions
   "Query to find promotions for the purchase."
@@ -99,24 +99,25 @@
 
 
 ;;; Shipping restrictions.
+;(defn order-line-item-rule [])
 
-(defrule noship-flammables
-  [OrderLineItem (true? (:flammable? attributes)) (= ?sku sku)]
-  =>
-  (insert! (->ShippingRestriction
-             ?sku
-             :flammable
-             "Flammable and hazardous materials are pickup-only.")))
-
-(defrule noship-alcohol
-  [OrderLineItem (true? (:alcohol? attributes)) (= ?sku sku)]
-  [Order [{{state :state} :shipping-address}]
-         (#{"AL" "OK" "UT"} state) (= ?state state)]
-  =>
-  (insert! (->ShippingRestriction
-             ?sku
-             :alcohol-shipping-restriction
-             (str "Alcohol cannot be shipped to " ?state "."))))
+;(defrule noship-flammables
+;  [OrderLineItem (= true (:flammable? attributes)) (= ?sku sku)]
+;  =>
+;  (insert! (->ShippingRestriction
+;             ?sku
+;             :flammable
+;             "Flammable and hazardous materials are pickup-only.")))
+;
+;(defrule noship-alcohol
+;  [OrderLineItem (true? (:alcohol? attributes)) (= ?sku sku)]
+;  [Order [{{state :state} :shipping-address}]
+;         (#{"AL" "OK" "UT"} state) (= ?state state)]
+;  =>
+;  (insert! (->ShippingRestriction
+;             ?sku
+;             :alcohol-shipping-restriction
+;             (str "Alcohol cannot be shipped to " ?state "."))))
 
 (defquery get-shipping-restrictions
   "Query to find shipping restrictions for the purchase."
@@ -131,7 +132,7 @@
   [session]
   (println "Printing Discounts:")
   (doseq [{best-discount :?best-discount} (query session get-best-discount)]
-    (println "   Best Discount: " best-discount))
+   (println "   Best Discount: " best-discount))
   (doseq [{discount :?discount} (query session get-all-discounts)]
     (println "   All Discounts: " discount))
   session)
@@ -188,3 +189,6 @@
         (print-shipping-restrictions!)))
 
   nil)
+
+
+(defn data [])
