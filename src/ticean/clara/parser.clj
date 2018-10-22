@@ -115,16 +115,42 @@
       (throw (ex-info (print-str parse-tree) {:failure parse-tree})))
     (insta/transform shopping-transforms parse-tree)))
 
-(defn print-parsed-rules [rules]
-  (println "PARSED RULES: \n")
-  (clojure.pprint/pprint rules)
-  (println "\n\n"))
+(defn print-parsed-rules [rules print?]
+  (when print?
+    (println "\nPARSED RULES: \n")
+    (clojure.pprint/pprint rules)
+    println "\n\n")
+  rules)
+
+(defn print-explain-activations [session print?]
+  (when print?
+    (println "\nEXPLAIN ACTIVATIONS: \n")
+    (inspect/explain-activations session)
+    (println "\n\n"))
+  session)
+
+
+(defn calculate
+  "Reduces over the session to build a results maps."
+  [session]
+  (let [promotions
+        (map :?promotion (clara/query session shopping/get-promotions))
+        discounts
+        (map :?discount (clara/query session shopping/get-all-discounts))
+        shipping-restrictions
+        (map :?shipping-restriction
+             (clara/query session shopping/get-shipping-restrictions))]
+    (-> {}
+      (assoc :promotions promotions)
+      (assoc :discounts discounts)
+      (assoc :shipping-restrictions shipping-restrictions))))
+
 
 (defn run-examples
   "Run the example."
-  []
+  [& {:keys [print-parsed-rules? explain-activations?]}]
   (let [rules (load-user-rules example-rules)]
-    (print-parsed-rules rules)
+    (print-parsed-rules rules print-parsed-rules?)
     (-> (clara/mk-session 'ticean.clara.parser
                           'ticean.clara.shopping
                           rules)
@@ -137,7 +163,8 @@
           (shopping/->OrderLineItem "firecracker" 10 {:isExplosive "kaboom"})
           (shopping/->OrderLineItem "north-face-jacket" 10 {:brand "NorthFace"}))
         (clara/fire-rules)
-        ;#(when explain-activations? (inspect/explain-activations %))
-        (shopping/print-discounts!)
-        (shopping/print-promotions!)
-        (shopping/print-shipping-restrictions!))))
+        (print-explain-activations explain-activations?)
+        ;(shopping/print-discounts!)
+        ;(shopping/print-promotions!)
+        ;(shopping/print-shipping-restrictions!)
+        (calculate))))
