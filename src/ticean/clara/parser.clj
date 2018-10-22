@@ -95,19 +95,6 @@
   INSERT shipping_restriction noship-expensive-things text-description-goes-here
      WHEN order_line_item.cost > 100;")
 
-(def unused-rules
-  "insert discount my-discount 15
-     when customer.status is platinum;
-
-   insert discount extra-discount 10
-     when customer.status is gold and order_total.value > 200;
-
-   insert promotion free-widget-month free-widget
-     when customer.status is gold
-      and order.month is august;")
-
-
-
 (defn load-user-rules
   "Converts a business rule string into Clara productions."
   [business-rules]
