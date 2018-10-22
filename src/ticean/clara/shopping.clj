@@ -30,6 +30,10 @@
   =>
   (insert! (->OrderTotal ?value)))
 
+(defquery get-order-total
+  "Query to find the order total."
+  []
+  (?value <- OrderTotal))
 
 ;;;Discounts.
 

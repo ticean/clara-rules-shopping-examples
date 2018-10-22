@@ -133,7 +133,9 @@
 (defn calculate
   "Reduces over the session to build a results maps."
   [session]
-  (let [promotions
+  (let [order-total
+        (-> session (clara/query shopping/get-order-total) first :?value :value)
+        promotions
         (map :?promotion (clara/query session shopping/get-promotions))
         discounts
         (map :?discount (clara/query session shopping/get-all-discounts))
@@ -141,6 +143,7 @@
         (map :?shipping-restriction
              (clara/query session shopping/get-shipping-restrictions))]
     (-> {}
+      (assoc :order-total order-total)
       (assoc :promotions promotions)
       (assoc :discounts discounts)
       (assoc :shipping-restrictions shipping-restrictions))))
@@ -164,7 +167,13 @@
           (shopping/->OrderLineItem "north-face-jacket" 10 {:brand "NorthFace"}))
         (clara/fire-rules)
         (print-explain-activations explain-activations?)
-        ;(shopping/print-discounts!)
-        ;(shopping/print-promotions!)
-        ;(shopping/print-shipping-restrictions!)
         (calculate))))
+
+
+(comment
+  ;; Without instrumentation printing.
+  (require '[ticean.clara.parser :as parser])
+  (clojure.pprint/pprint
+    (parser/run-examples :print-parsed-rules? false
+                         :explain-activations? false)))
+  
