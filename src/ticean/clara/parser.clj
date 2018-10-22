@@ -1,5 +1,5 @@
 (ns ticean.clara.parser
-  "Demonstration of Clara rules applied to a commerce application.
+  "Rule grammar built with Instaparse.
 
   This is extended from the Clara examples.
   https://github.com/cerner/clara-examples
