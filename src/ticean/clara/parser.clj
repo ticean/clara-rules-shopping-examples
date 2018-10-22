@@ -10,8 +10,9 @@
     [instaparse.core :as insta]
     [ticean.clara.shopping :as shopping])
   (:import
-    [ticean.clara.shopping Customer Order OrderPromoCode OrderLineItem
-       OrderTotal Discount Promotion ShippingRestriction]))
+    [ticean.clara.shopping ActiveShippingMethod Customer Order OrderPromoCode
+       OrderLineItem OrderTotal Discount Promotion ShippingMethod
+       ShippingRestriction]))
 
 (defn shopping-grammar
   []
@@ -139,6 +140,9 @@
         (map :?promotion (clara/query session shopping/get-promotions))
         discounts
         (map :?discount (clara/query session shopping/get-all-discounts))
+        shipping-methods
+        (map :?shipping-method
+             (clara/query session shopping/get-shipping-methods))
         shipping-restrictions
         (map :?shipping-restriction
              (clara/query session shopping/get-shipping-restrictions))]
@@ -146,6 +150,7 @@
       (assoc :order-total order-total)
       (assoc :promotions promotions)
       (assoc :discounts discounts)
+      (assoc :shipping-methods shipping-methods)
       (assoc :shipping-restrictions shipping-restrictions))))
 
 

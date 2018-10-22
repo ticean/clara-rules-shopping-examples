@@ -18,6 +18,11 @@
 (defrecord OrderLineItem [sku cost attributes])
 (defrecord OrderTotal [value])
 
+(defrecord ActiveShippingMethod [id name label description rate group carrier
+                                 attributes])
+(defrecord ShippingMethod [id name label description rate group carrier
+                           attributes])
+
 (defrecord Discount [code name description type value])
 (defrecord Promotion [code name description type config])
 (defrecord ShippingRestriction [sku code description])
@@ -123,6 +128,16 @@
 ;             :alcohol-shipping-restriction
 ;             (str "Alcohol cannot be shipped to " ?state "."))))
 
+(defquery get-active-shipping-methods
+  "Query to find all active shipping methods."
+  []
+  [?active-shipping-method <- ActiveShippingMethod])
+
+(defquery get-shipping-methods
+  "Query to find all configured shipping methods."
+  []
+  [?shipping-method <- ShippingMethod])
+
 (defquery get-shipping-restrictions
   "Query to find shipping restrictions for the purchase."
   []
@@ -193,6 +208,3 @@
         (print-shipping-restrictions!)))
 
   nil)
-
-
-(defn data [])
