@@ -52,30 +52,56 @@
       (assoc :shipping-restrictions shipping-restrictions))))
 
 
-(defn run-examples
-  "Run the example."
-  [& {:keys [print-parsed-rules? explain-activations?]}]
-  (let [rules (parser/load-user-rules parser/example-rules)]
-    (print-parsed-rules rules print-parsed-rules?)
-    (-> (clara/mk-session 'ticean.clara.parser
-                          'ticean.clara.shopping
-                          rules)
-        (clara/insert
-          (shopping/->Customer :not-vip)
-          (shopping/->Order 2018 :august 20 {})
-          (shopping/->OrderLineItem :gizmo 20 {})
-          (shopping/->OrderLineItem :widget 120 {})
-          (shopping/->OrderLineItem :fizzbuzz 90 {:flammable? true})
-          (shopping/->OrderLineItem "firecracker" 10 {:isExplosive "kaboom"})
-          (shopping/->OrderLineItem "north-face-jacket" 10 {:brand "NorthFace"}))
-        (clara/fire-rules)
-        (print-explain-activations explain-activations?)
-        (calculate))))
+;; These rules may be stored in an external file or database.
+(def example-rules
+  "INSERT shipping_restriction no-explosives text-description-goes-here
+     WHEN order_line_item.attributes.isExplosive = kaboom;
+  INSERT shipping_restriction noship-expensive-things text-description-goes-here
+     WHEN order_line_item.cost > 100;")
 
+(def session-storage (atom nil))
+(defn base-session
+  "Creates a base Clara session which includes common facts and rules."
+  [rules]
+  (-> (clara/mk-session 'ticean.clara.parser
+                        'ticean.clara.shopping
+                        rules)
+      (clara/fire-rules)))
+
+(defn load-base-session
+  [& {:keys [print-parsed-rules? rules]}]
+  (print-parsed-rules rules print-parsed-rules?)
+  (reset! session-storage (base-session rules)))
+
+(defn run-forked-session
+  "Clara sessions are immutable. Appends facts to the provided session and
+  fires rules. Queries the session and returns cart information."
+  [session & {:keys [explain-activations?]}]
+  (-> session
+      (clara/insert
+        (shopping/->Customer :not-vip)
+        (shopping/->Order 2018 :august 20 {})
+        (shopping/->OrderLineItem :gizmo 20 {})
+        (shopping/->OrderLineItem :widget 120 {})
+        (shopping/->OrderLineItem :fizzbuzz 90 {:flammable? true})
+        (shopping/->OrderLineItem "firecracker" 10 {:isExplosive "kaboom"})
+        (shopping/->OrderLineItem "north-face-jacket" 10 {:brand "NorthFace"}))
+      (clara/fire-rules)
+      (print-explain-activations explain-activations?)
+      (calculate)))
 
 (comment
   ;; Without instrumentation printing.
+  (require '[clara.rules :as clara])
+  (require '[ticean.clara.parser :as parser])
   (require '[ticean.clara.session :as session])
-  (clojure.pprint/pprint
-    (session/run-examples :print-parsed-rules? false
-                         :explain-activations? false)))
+  (require '[ticean.clara.shopping :as shopping])
+
+  (session/load-base-session
+    :rules (parser/load-user-rules session/example-rules))
+
+  (time
+    (clojure.pprint/pprint
+     (session/run-forked-session
+       @session/session-storage
+       :explain-activations? true))))

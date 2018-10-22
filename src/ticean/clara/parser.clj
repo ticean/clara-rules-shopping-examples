@@ -86,13 +86,6 @@
       :lhs conditions
       :rhs `(clara.rules/insert! (shopping/->ShippingRestriction (:sku ~'?fact) ~name ~description))})})
 
-;; These rules may be stored in an external file or database.
-(def example-rules
-  "INSERT shipping_restriction no-explosives text-description-goes-here
-     WHEN order_line_item.attributes.isExplosive = kaboom;
-  INSERT shipping_restriction noship-expensive-things text-description-goes-here
-     WHEN order_line_item.cost > 100;")
-
 (defn load-user-rules
   "Converts a business rule string into Clara productions."
   [rule-string]
