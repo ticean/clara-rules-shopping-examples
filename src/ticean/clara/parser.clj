@@ -10,8 +10,8 @@
     [instaparse.core :as insta]
     [ticean.clara.shopping :as shopping])
   (:import
-    [ticean.clara.shopping Customer Order OrderPromoCode OrderLineItem
-       OrderTotal Discount Promotion ShippingRestriction]))
+    [ticean.clara.shopping Customer Discount Order OrderLineItem OrderPromoCode
+                           OrderTotal PromotionShippingRestriction]))
 
 (defn shopping-grammar
   []
