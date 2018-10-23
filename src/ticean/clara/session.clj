@@ -1,13 +1,8 @@
 (ns ticean.clara.session
-  "Demonstration of Clara rules applied to a commerce application.
-
-  This is extended from the Clara examples.
-  https://github.com/cerner/clara-examples
-  "
+  "Clara session helpers."
   (:require
     [clara.rules :as clara]
     [clara.tools.inspect :as inspect]
-    [ticean.clara.parser :as parser]
     [ticean.clara.shopping :as shopping])
   (:import
     [ticean.clara.shopping ActiveShippingMethod Customer Order OrderPromoCode
@@ -27,7 +22,6 @@
     (inspect/explain-activations session)
     (println "\n\n"))
   session)
-
 
 (defn calculate
   "Reduces over the session to build a results maps."
@@ -112,9 +106,9 @@
   (def example-cart-facts
     [{:fact-type 'Customer :status :not-vip}
      {:fact-type 'Order :year 2018 :month :october :day 22 :attributes {}}
-     #_{:fact-type 'OrderLineItem :sku :gizmo :cost 20 :attributes {}}
-     #_{:fact-type 'OrderLineItem :sku :widget :cost 120 :attributes {}}
-     #_{:fact-type 'OrderLineItem :sku :fizzbuzz :cost 90 :attributes {:flammable? true}}
+     {:fact-type 'OrderLineItem :sku :gizmo :cost 20 :attributes {}}
+     {:fact-type 'OrderLineItem :sku :widget :cost 120 :attributes {}}
+     {:fact-type 'OrderLineItem :sku :fizzbuzz :cost 90 :attributes {:flammable? true}}
      {:fact-type 'OrderLineItem :sku "firecracker" :cost 10 :attributes {:isExplosive? "kaboom"}}
      {:fact-type 'OrderLineItem :sku "north-face-jacket" :cost 10 :attributes {:brand "NorthFace"}}])
 

@@ -24,10 +24,12 @@
 (defrecord ShippingRestriction [sku code description])
 
 
+(defn fact-record-type [m] (-> m :fact-type name symbol))
+
 (defmulti ->record
   "Converts a map representing a fact to a fact Record. Note that not all facts
   are insertable because they should be inferred by Clara."
-  (fn [m] (-> m :fact-type name symbol)))
+  (fn [m] (fact-record-type m)))
 
 (defmethod ->record 'Customer [m] (map->Customer m))
 (defmethod ->record 'Discount [m] (map->Discount m))
@@ -35,7 +37,10 @@
 (defmethod ->record 'OrderLineItem [m] (map->OrderLineItem m))
 (defmethod ->record 'OrderPromoCode [m] (map->OrderPromoCode m))
 (defmethod ->record 'ShippingMethod [m] (map->ShippingMethod m))
-(defmethod ->record :default [m] (throw (ex-info "Unknown fact type" m)))
+(defmethod ->record :default [m]
+  (throw (ex-info "Unknown fact type"
+                  {:input-type (fact-record-type m)
+                   :input m})))
 
 ;;;; Base rules and queries.
 
