@@ -1,0 +1,14 @@
+{:duct.core/project-ns  ticean.clara
+ :duct.core/environment :production
+
+ ;:duct.module/ataraxy
+ ;{#_[:post "/session" {body :body-params}] #_[:sessions/run body]}
+
+ :duct.logger/timbre
+ {:level :info
+  :appender #ig/ref :duct.logger.timbre/println}
+
+ :duct.logger.timbre/println {}
+
+ :duct.module/logging {:environment "production"}
+ :duct.module.web/api {}}

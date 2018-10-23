@@ -1,7 +1,7 @@
-(ns ticean.clara-test
+(ns ticean.clara.main-test
   (:require
     [clojure.test :refer :all]
-    [ticean.clara :refer :all]))
+    [ticean.clara.main]))
 
 (deftest a-test
   (testing "FIXME, I fail."

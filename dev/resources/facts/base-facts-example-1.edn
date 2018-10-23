@@ -1,0 +1,6 @@
+[{:fact-type 'ShippingMethod :id "001" :name "Ground" :label "Ground" :description "3-7 business days" :rate 5 :group "ground" :carrier nil :attributes {}}
+ {:fact-type 'ShippingMethod :id "040" :name "USPS Gift Card" :label "USPS Gift Card" :description "USPS Gift Card" :rate 6 :group "ground" :carrier "USPS" :attributes {}}
+ {:fact-type 'ShippingMethod :id "virtual-giftcard-shipping" :name "Virtual Gift Card Shipping" :label "USPS Gift Card Shipping Method" :description "" :rate 6 :group "virtual" :carrier nil :attributes {}}
+ {:fact-type 'ShippingMethod :id "021" :name "USPS" :label "USPS" :description "3-7 business days" :rate 10 :group "ground" :carrier "USPS" :attributes {}}
+ {:fact-type 'ShippingMethod :id "002" :name "2-Day Express" :label "2-Day Express" :description "2-3 business days - order by noon EST to ship same day" :rate 20 :group "ground" :carrier nil :attributes {}}
+ {:fact-type 'ShippingMethod :id "free" :name "Free 2-Day Shipping" :label "Free 2-Day Shipping" :description "Free shipping for orders over $49.00" :rate 0 :group "ground" :carrier nil :attributes {:order-total-min 49.00 :order-total-max 100000}}]

@@ -1,15 +1,20 @@
 {:paths ["resources" "src"]
- :deps {org.clojure/clojure {:mvn/version "1.10.0-alpha8"}
+ :deps {duct/core {:mvn/version "0.6.2"}
+        duct/logger {:mvn/version "0.2.1"}
+        duct/logger.timbre {:mvn/version "0.4.1"}
+        duct/module.ataraxy {:mvn/version "0.2.0"}
+        duct/module.logging {:mvn/version "0.3.1"}
+        duct/module.web {:mvn/version "0.6.4"}
+        instaparse {:mvn/version "1.4.9"}
+        org.clojure/clojure {:mvn/version "1.10.0-alpha8"}
         com.cerner/clara-rules {:mvn/version "0.18.0"}}
  :aliases
  {:bench {:extra-deps {criterium {:mvn/version "RELEASE"}}}
 
   ;; Load the development environment.
   :dev {:extra-paths ["dev/resources" "dev/src"]
-        :extra-deps {duct/core {:mvn/version "0.6.2"}
-                     expound {:mvn/version "0.7.1"}
+        :extra-deps {expound {:mvn/version "0.7.1"}
                      fipp {:mvn/version "0.6.12"}
-                     instaparse {:mvn/version "1.4.9"}
                      integrant/repl {:mvn/version "0.2.0"}}}
 
   ;; List dependencies that have new available versions.

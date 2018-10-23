@@ -6,4 +6,4 @@
 #
 #     java -jar uberjar.jar
 
-clojure -m reaction.cart.main
+clojure -m ticean.clara.main
