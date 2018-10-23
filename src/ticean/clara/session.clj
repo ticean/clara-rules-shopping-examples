@@ -38,6 +38,9 @@
         (map :?promotion (clara/query session shopping/get-promotions))
         discounts
         (map :?discount (clara/query session shopping/get-all-discounts))
+        active-shipping-methods
+        (map :?active-shipping-method
+             (clara/query session shopping/get-active-shipping-methods))
         shipping-methods
         (map :?shipping-method
              (clara/query session shopping/get-shipping-methods))
@@ -48,32 +51,9 @@
       (assoc :order-total order-total)
       (assoc :promotions promotions)
       (assoc :discounts discounts)
+      (assoc :active-shipping-methods active-shipping-methods)
       (assoc :shipping-methods shipping-methods)
       (assoc :shipping-restrictions shipping-restrictions))))
-
-
-;; These rules may be stored in an external file or database.
-(def example-rules
-  "INSERT shipping_restriction no-explosives text-description-goes-here
-     WHEN order_line_item.attributes.isExplosive = kaboom;
-  INSERT shipping_restriction noship-expensive-things text-description-goes-here
-     WHEN order_line_item.cost > 100;")
-
-(defn example-base-facts []
-  [{:fact-type 'ShippingMethod :id "001" :name "Ground" :label "Ground" :description "3-7 business days" :rate 5 :group "ground" :carrier nil :attributes {}}
-   {:fact-type 'ShippingMethod :id "040" :name "USPS Gift Card" :label "USPS Gift Card" :description "USPS Gift Card" :rate 6 :group "ground" :carrier "USPS" :attributes {}}
-   {:fact-type 'ShippingMethod :id "virtual-giftcard-shipping" :name "Virtual Gift Card Shipping" :label "USPS Gift Card Shipping Method" :description "" :rate 6 :group "virtual" :carrier nil :attributes {}}
-   {:fact-type 'ShippingMethod :id "021" :name "USPS" :label "USPS" :description "3-7 business days" :rate 10 :group "ground" :carrier "USPS" :attributes {}}
-   {:fact-type 'ShippingMethod :id "002" :name "2-Day Express" :label "2-Day Express" :description "2-3 business days - order by noon EST to ship same day" :rate 20 :group "ground" :carrier nil :attributes {}}])
-
-(defn example-facts []
-  [{:fact-type 'Customer :status :not-vip}
-   {:fact-type 'Order :year 2018 :month :august :day 20 :shipping-address {}}
-   {:fact-type 'OrderLineItem :sku :gizmo :cost 20 :attributes {}}
-   {:fact-type 'OrderLineItem :sku :widget :cost 120 :attributes {}}
-   {:fact-type 'OrderLineItem :sku :fizzbuzz :cost 90 :attributes {:flammable? true}}
-   {:fact-type 'OrderLineItem :sku "firecracker" :cost 10 :attributes {:isExplosive "kaboom"}}
-   {:fact-type 'OrderLineItem :sku "north-face-jacket" :cost 10 :attributes {:brand "NorthFace"}}])
 
 (def session-storage (atom nil))
 (defn base-session
@@ -101,19 +81,49 @@
 
 (comment
   ;; Without instrumentation printing.
-  (require '[clara.rules :as clara])
+  (require '[clara.rules :as rules])
+  (require '[ticean.clara :as clara])
   (require '[ticean.clara.parser :as parser])
   (require '[ticean.clara.session :as session])
   (require '[ticean.clara.shopping :as shopping])
 
-  (def base-facts (doall (map (comp #(dissoc % :fact-type) shopping/->record) (session/example-base-facts))))
-  (def facts (doall (map (comp #(dissoc % :fact-type) shopping/->record) (session/example-facts))))
+  ;; These rules may be stored in an external file or database.
+  (def example-rules
+    "INSERT shipping_restriction no-explosives text-description-goes-here
+       WHEN order_line_item.attributes.isExplosive = kaboom;
+    INSERT shipping_restriction noship-expensive-things text-description-goes-here
+       WHEN order_line_item.cost > 100;")
+
+  (def example-base-facts
+    [#_{:fact-type 'ShippingMethod :id "001" :name "Ground" :label "Ground" :description "3-7 business days" :rate 5 :group "ground" :carrier nil :attributes {}}
+     #_{:fact-type 'ShippingMethod :id "040" :name "USPS Gift Card" :label "USPS Gift Card" :description "USPS Gift Card" :rate 6 :group "ground" :carrier "USPS" :attributes {}}
+     #_{:fact-type 'ShippingMethod :id "virtual-giftcard-shipping" :name "Virtual Gift Card Shipping" :label "USPS Gift Card Shipping Method" :description "" :rate 6 :group "virtual" :carrier nil :attributes {}}
+     #_{:fact-type 'ShippingMethod :id "021" :name "USPS" :label "USPS" :description "3-7 business days" :rate 10 :group "ground" :carrier "USPS" :attributes {}}
+     #_{:fact-type 'ShippingMethod :id "002" :name "2-Day Express" :label "2-Day Express" :description "2-3 business days - order by noon EST to ship same day" :rate 20 :group "ground" :carrier nil :attributes {}}
+     {:fact-type 'ShippingMethod :id "free" :name "Free 2-Day Shipping" :label "Free 2-Day Shipping" :description "Free shipping for orders over $49.00" :rate 0 :group "ground" :carrier nil :attributes {:order-total-min 49.00 :order-total-max 100000}}])
+
+  (def base-facts (map shopping/->record example-base-facts))
 
   (session/load-base-session
     :facts base-facts
-    :rules (parser/load-user-rules session/example-rules))
+    :rules (parser/load-user-rules example-rules))
 
-  (clojure.pprint/pprint
+
+  (def example-cart-facts
+    [{:fact-type 'Customer :status :not-vip}
+     {:fact-type 'Order :year 2018 :month :october :day 22 :attributes {}}
+     #_{:fact-type 'OrderLineItem :sku :gizmo :cost 20 :attributes {}}
+     #_{:fact-type 'OrderLineItem :sku :widget :cost 120 :attributes {}}
+     #_{:fact-type 'OrderLineItem :sku :fizzbuzz :cost 90 :attributes {:flammable? true}}
+     {:fact-type 'OrderLineItem :sku "firecracker" :cost 10 :attributes {:isExplosive? "kaboom"}}
+     {:fact-type 'OrderLineItem :sku "north-face-jacket" :cost 10 :attributes {:brand "NorthFace"}}])
+
+  (def cart-facts (map shopping/->record example-cart-facts))
+
+  (def result
     (-> @session/session-storage
-        (session/run-session :facts facts :explain-activations? false)
-        (session/calculate))))
+        (session/run-session :facts cart-facts :explain-activations? false)
+        (session/calculate)))
+
+  (clojure.pprint/pprint result)
+  (map :id (:active-shipping-methods result)))

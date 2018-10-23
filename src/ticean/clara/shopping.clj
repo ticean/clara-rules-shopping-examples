@@ -27,7 +27,7 @@
 (defmulti ->record
   "Converts a map representing a fact to a fact Record. Note that not all facts
   are insertable because they should be inferred by Clara."
-  :fact-type)
+  (fn [m] (-> m :fact-type name symbol)))
 
 (defmethod ->record 'Customer [m] (map->Customer m))
 (defmethod ->record 'Discount [m] (map->Discount m))
@@ -93,3 +93,25 @@
   "Query to find shipping restrictions for the purchase."
   []
   [?shipping-restriction <- ShippingRestriction])
+
+
+(defrule activate-shipping-by-order-total-limits
+  "Activates shipping methods that conform to min and max of the total order
+  amount. If the configuration values are not set on the ShippingMethod then
+  assume that the method applies on the missing range type.
+
+  WARNING: This is a naive implementation and uses the OrderTotal rather than
+  the total AFTER all other discounts and promotions are applied.
+
+  Assumes attributes which can be changed, of course.
+
+    :order-total-min - The minimum total order spend for which the method will apply.
+    :order-total-max - The maximum total order spend for which the method will apply."
+  [?method <- ShippingMethod
+   (= ?order-total-min (:order-total-min attributes))
+   (= ?order-total-max (:order-total-max attributes))
+   (if (number? ?order-total-min) (> ?value ?order-total-min) true)
+   (if (number? ?order-total-max) (< ?value ?order-total-max) true)]
+  [OrderTotal (= ?value value)]
+  =>
+  (insert! (map->ActiveShippingMethod ?method)))
