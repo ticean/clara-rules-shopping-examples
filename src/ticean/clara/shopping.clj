@@ -24,6 +24,19 @@
 (defrecord ShippingRestriction [sku code description])
 
 
+(defmulti ->record
+  "Converts a map representing a fact to a fact Record. Note that not all facts
+  are insertable because they should be inferred by Clara."
+  :fact-type)
+
+(defmethod ->record 'Customer [m] (map->Customer m))
+(defmethod ->record 'Discount [m] (map->Discount m))
+(defmethod ->record 'Order [m] (map->Order m))
+(defmethod ->record 'OrderLineItem [m] (map->OrderLineItem m))
+(defmethod ->record 'OrderPromoCode [m] (map->OrderPromoCode m))
+(defmethod ->record 'ShippingMethod [m] (map->ShippingMethod m))
+(defmethod ->record :default [m] (throw (ex-info "Unknown fact type" m)))
+
 ;;;; Base rules and queries.
 
 (defrule order-total
@@ -35,6 +48,16 @@
   "Query to find the order total."
   []
   (?value <- OrderTotal))
+
+(defquery get-orders
+  "Query to get all orders."
+  []
+  (?order <- Order))
+
+(defquery get-order-line-items
+  "Query to get the order line items."
+  []
+  (?order-line-item <- OrderLineItem))
 
 (def max-discount
   "Accumulator that returns the highest percentage discount."

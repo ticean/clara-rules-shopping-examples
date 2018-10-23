@@ -59,6 +59,15 @@
   INSERT shipping_restriction noship-expensive-things text-description-goes-here
      WHEN order_line_item.cost > 100;")
 
+(defn example-facts []
+  [{:fact-type 'Customer :status :not-vip}
+   {:fact-type 'Order :year 2018 :month :august :day 20 :shipping-address {}}
+   {:fact-type 'OrderLineItem :sku :gizmo :cost 20 :attributes {}}
+   {:fact-type 'OrderLineItem :sku :widget :cost 120 :attributes {}}
+   {:fact-type 'OrderLineItem :sku :fizzbuzz :cost 90 :attributes {:flammable? true}}
+   {:fact-type 'OrderLineItem :sku "firecracker" :cost 10 :attributes {:isExplosive "kaboom"}}
+   {:fact-type 'OrderLineItem :sku "north-face-jacket" :cost 10 :attributes {:brand "NorthFace"}}])
+
 (def session-storage (atom nil))
 (defn base-session
   "Creates a base Clara session which includes common facts and rules."
@@ -73,22 +82,17 @@
   (print-parsed-rules rules print-parsed-rules?)
   (reset! session-storage (base-session rules)))
 
-(defn run-forked-session
+(def spy (fn [x] (println x) x))
+
+(defn run-session
   "Clara sessions are immutable. Appends facts to the provided session and
   fires rules. Queries the session and returns cart information."
-  [session & {:keys [explain-activations?]}]
+  [session facts & {:keys [explain-activations?]}]
   (-> session
-      (clara/insert
-        (shopping/->Customer :not-vip)
-        (shopping/->Order 2018 :august 20 {})
-        (shopping/->OrderLineItem :gizmo 20 {})
-        (shopping/->OrderLineItem :widget 120 {})
-        (shopping/->OrderLineItem :fizzbuzz 90 {:flammable? true})
-        (shopping/->OrderLineItem "firecracker" 10 {:isExplosive "kaboom"})
-        (shopping/->OrderLineItem "north-face-jacket" 10 {:brand "NorthFace"}))
+      (clara/insert-all facts)
+      (spy)
       (clara/fire-rules)
-      (print-explain-activations explain-activations?)
-      (calculate)))
+      (print-explain-activations explain-activations?)))
 
 (comment
   ;; Without instrumentation printing.
@@ -97,11 +101,13 @@
   (require '[ticean.clara.session :as session])
   (require '[ticean.clara.shopping :as shopping])
 
+  (def facts (vec (doall (map (comp #(dissoc % :fact-type) shopping/->record) (session/example-facts)))))
+
   (session/load-base-session
     :rules (parser/load-user-rules session/example-rules))
 
-  (time
-    (clojure.pprint/pprint
-     (session/run-forked-session
-       @session/session-storage
-       :explain-activations? true))))
+  (clojure.pprint/pprint
+    (-> @session/session-storage
+        (session/run-session facts :explain-activations? false)
+        (session/calculate))))
+    
