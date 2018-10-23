@@ -71,16 +71,17 @@
 (def session-storage (atom nil))
 (defn base-session
   "Creates a base Clara session which includes common facts and rules."
-  [rules]
+  [facts rules]
   (-> (clara/mk-session 'ticean.clara.parser
                         'ticean.clara.shopping
                         rules)
+      (clara/insert-all facts)
       (clara/fire-rules)))
 
 (defn load-base-session
-  [& {:keys [print-parsed-rules? rules]}]
+  [& {:keys [facts print-parsed-rules? rules]}]
   (print-parsed-rules rules print-parsed-rules?)
-  (reset! session-storage (base-session rules)))
+  (reset! session-storage (base-session facts rules)))
 
 (def spy (fn [x] (println x) x))
 
