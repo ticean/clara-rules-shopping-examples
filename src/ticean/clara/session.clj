@@ -83,15 +83,12 @@
   (print-parsed-rules rules print-parsed-rules?)
   (reset! session-storage (base-session facts rules)))
 
-(def spy (fn [x] (println x) x))
-
 (defn run-session
   "Clara sessions are immutable. Appends facts to the provided session and
   fires rules. Queries the session and returns cart information."
   [session facts & {:keys [explain-activations?]}]
   (-> session
       (clara/insert-all facts)
-      (spy)
       (clara/fire-rules)
       (print-explain-activations explain-activations?)))
 
