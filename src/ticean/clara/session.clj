@@ -108,4 +108,3 @@
     (-> @session/session-storage
         (session/run-session facts :explain-activations? false)
         (session/calculate))))
-    
