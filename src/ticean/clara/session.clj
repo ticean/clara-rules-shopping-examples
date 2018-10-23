@@ -86,7 +86,7 @@
 (defn run-session
   "Clara sessions are immutable. Appends facts to the provided session and
   fires rules. Queries the session and returns cart information."
-  [session facts & {:keys [explain-activations?]}]
+  [session & {:keys [facts explain-activations?]}]
   (-> session
       (clara/insert-all facts)
       (clara/fire-rules)
@@ -106,5 +106,5 @@
 
   (clojure.pprint/pprint
     (-> @session/session-storage
-        (session/run-session facts :explain-activations? false)
+        (session/run-session :facts facts :explain-activations? false)
         (session/calculate))))
