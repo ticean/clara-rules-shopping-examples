@@ -59,6 +59,13 @@
   INSERT shipping_restriction noship-expensive-things text-description-goes-here
      WHEN order_line_item.cost > 100;")
 
+(defn example-base-facts []
+  [{:fact-type 'ShippingMethod :id "001" :name "Ground" :label "Ground" :description "3-7 business days" :rate 5 :group "ground" :carrier nil :attributes {}}
+   {:fact-type 'ShippingMethod :id "040" :name "USPS Gift Card" :label "USPS Gift Card" :description "USPS Gift Card" :rate 6 :group "ground" :carrier "USPS" :attributes {}}
+   {:fact-type 'ShippingMethod :id "virtual-giftcard-shipping" :name "Virtual Gift Card Shipping" :label "USPS Gift Card Shipping Method" :description "" :rate 6 :group "virtual" :carrier nil :attributes {}}
+   {:fact-type 'ShippingMethod :id "021" :name "USPS" :label "USPS" :description "3-7 business days" :rate 10 :group "ground" :carrier "USPS" :attributes {}}
+   {:fact-type 'ShippingMethod :id "002" :name "2-Day Express" :label "2-Day Express" :description "2-3 business days - order by noon EST to ship same day" :rate 20 :group "ground" :carrier nil :attributes {}}])
+
 (defn example-facts []
   [{:fact-type 'Customer :status :not-vip}
    {:fact-type 'Order :year 2018 :month :august :day 20 :shipping-address {}}
@@ -99,9 +106,11 @@
   (require '[ticean.clara.session :as session])
   (require '[ticean.clara.shopping :as shopping])
 
-  (def facts (vec (doall (map (comp #(dissoc % :fact-type) shopping/->record) (session/example-facts)))))
+  (def base-facts (doall (map (comp #(dissoc % :fact-type) shopping/->record) (session/example-base-facts))))
+  (def facts (doall (map (comp #(dissoc % :fact-type) shopping/->record) (session/example-facts))))
 
   (session/load-base-session
+    :facts base-facts
     :rules (parser/load-user-rules session/example-rules))
 
   (clojure.pprint/pprint
