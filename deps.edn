@@ -1,5 +1,6 @@
 {:paths ["resources" "src"]
- :deps {duct/core {:mvn/version "0.6.2"}
+ :deps {ataraxy {:mvn/version "0.4.2"}
+        duct/core {:mvn/version "0.6.2"}
         duct/logger {:mvn/version "0.2.1"}
         duct/logger.timbre {:mvn/version "0.4.1"}
         duct/module.ataraxy {:mvn/version "0.2.0"}
