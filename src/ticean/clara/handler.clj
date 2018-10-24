@@ -11,5 +11,5 @@
 (defmethod ig/init-key :ticean.clara.handler/index
   [_ {:keys [engine]}]
   (fn [{[_ payload] :ataraxy/result}]
-    (let [facts (map shopping/->record payload)]
+    (let [facts (map shopping/->fact-record payload)]
       [::response/ok (engine/query-session engine facts)])))

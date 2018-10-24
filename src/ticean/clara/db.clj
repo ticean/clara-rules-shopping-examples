@@ -18,7 +18,7 @@
   (load-facts [this]
     (let [file (:resource-file config)
           data (-> file io/resource slurp edn/read-string)]
-      (doall (map shopping/->record data)))))
+      (doall (map shopping/->fact-record data)))))
 
 (defmethod ig/init-key ::edn-fact-datastore
   [_ {:keys [config]}]

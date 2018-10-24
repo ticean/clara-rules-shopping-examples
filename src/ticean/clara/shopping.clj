@@ -26,18 +26,18 @@
 
 (defn fact-record-type [m] (-> m :fact-type name symbol))
 
-(defmulti ->record
+(defmulti ->fact-record
   "Converts a map representing a fact to a fact Record. Note that not all facts
   are insertable because they should be inferred by Clara."
   (fn [m] (fact-record-type m)))
 
-(defmethod ->record 'Customer [m] (map->Customer m))
-(defmethod ->record 'Discount [m] (map->Discount m))
-(defmethod ->record 'Order [m] (map->Order m))
-(defmethod ->record 'OrderLineItem [m] (map->OrderLineItem m))
-(defmethod ->record 'OrderPromoCode [m] (map->OrderPromoCode m))
-(defmethod ->record 'ShippingMethod [m] (map->ShippingMethod m))
-(defmethod ->record :default [m]
+(defmethod ->fact-record 'Customer [m] (map->Customer m))
+(defmethod ->fact-record 'Discount [m] (map->Discount m))
+(defmethod ->fact-record 'Order [m] (map->Order m))
+(defmethod ->fact-record 'OrderLineItem [m] (map->OrderLineItem m))
+(defmethod ->fact-record 'OrderPromoCode [m] (map->OrderPromoCode m))
+(defmethod ->fact-record 'ShippingMethod [m] (map->ShippingMethod m))
+(defmethod ->fact-record :default [m]
   (throw (ex-info "Unknown fact type"
                   {:input-type (fact-record-type m)
                    :input m})))
