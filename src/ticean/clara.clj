@@ -32,7 +32,6 @@
 (defmethod ig/init-key ::engine
   [_  {config :config}]
   (let [{:keys [base-facts base-rules]} config
-        _ (println base-rules)
         facts   (map shopping/->record base-facts)
         rules   (parser/load-user-rules base-rules)
         session (session/base-session facts rules)]
