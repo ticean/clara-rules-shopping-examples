@@ -1,13 +1,11 @@
 {:duct.core/project-ns  ticean.clara
  :duct.core/environment :production
 
- ;:duct.module/ataraxy
- ;{#_[:post "/session" {body :body-params}] #_[:sessions/run body]}
+ :duct.module/ataraxy {[:post "/" {body :body-params}] [:index body]}
 
  :duct.logger/timbre
   {:level :info
    :appender #ig/ref :duct.logger.timbre/println}
-
  :duct.logger.timbre/println {}
 
  :duct.module/logging {:environment "production"}
@@ -29,5 +27,6 @@
     INSERT shipping_restriction noship-expensive-things text-description-goes-here
       WHEN order_line_item.cost > 100;"}}
 
- :ticean.clara.db/edn-fact-datastore
-  {:config {:resource-file "facts/base-facts-example-1.edn"}}}
+ :ticean.clara.handler/index
+  {:logger #ig/ref :duct.logger/timbre
+   :engine #ig/ref :ticean.clara/engine}}
