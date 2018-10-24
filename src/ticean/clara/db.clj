@@ -8,14 +8,14 @@
 
 (defprotocol FactDatastore
   "Facts storage abstraction."
-  (load-all
+  (load-facts
     [this]
     "Loads data from a storage and returns a seq of fact records."))
 
 (defrecord EdnFactDatastore
   [config]
   FactDatastore
-  (load-all [this]
+  (load-facts [this]
     (let [file (:resource-file config)
           data (-> file io/resource slurp edn/read-string)]
       (doall (map shopping/->record data)))))

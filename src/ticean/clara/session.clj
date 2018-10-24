@@ -109,7 +109,7 @@
      {:fact-type 'OrderLineItem :sku :gizmo :cost 20 :attributes {}}
      {:fact-type 'OrderLineItem :sku :widget :cost 120 :attributes {}}
      {:fact-type 'OrderLineItem :sku :fizzbuzz :cost 90 :attributes {:flammable? true}}
-     {:fact-type 'OrderLineItem :sku "firecracker" :cost 10 :attributes {:isExplosive? "kaboom"}}
+     {:fact-type 'OrderLineItem :sku "firecracker" :cost 10 :attributes {:isExplosive "kaboom"}}
      {:fact-type 'OrderLineItem :sku "north-face-jacket" :cost 10 :attributes {:brand "NorthFace"}}])
 
   (def cart-facts (map shopping/->record example-cart-facts))
