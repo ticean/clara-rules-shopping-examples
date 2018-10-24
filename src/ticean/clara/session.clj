@@ -28,6 +28,8 @@
   [session]
   (let [order-total
         (-> session (clara/query shopping/get-order-total) first :?value :value)
+        order-shipping-surcharge-subtotal
+        (-> session (clara/query shopping/get-order-shipping-surcharge-subtotal) first :?value :value)
         promotions
         (map :?promotion (clara/query session shopping/get-promotions))
         discounts
@@ -43,13 +45,13 @@
              (clara/query session shopping/get-shipping-restrictions))]
     (-> {}
       (assoc :order-total order-total)
+      (assoc :order-shipping-surcharge-subtotal order-shipping-surcharge-subtotal)
       (assoc :promotions promotions)
       (assoc :discounts discounts)
       (assoc :active-shipping-methods active-shipping-methods)
       (assoc :shipping-methods shipping-methods)
       (assoc :shipping-restrictions shipping-restrictions))))
 
-(def session-storage (atom nil))
 (defn base-session
   "Creates a base Clara session which includes common facts and rules."
   [facts rules]
@@ -58,11 +60,6 @@
                         rules)
       (clara/insert-all facts)
       (clara/fire-rules)))
-
-(defn load-base-session
-  [& {:keys [facts print-parsed-rules? rules]}]
-  (print-parsed-rules rules print-parsed-rules?)
-  (reset! session-storage (base-session facts rules)))
 
 (defn run-session
   "Clara sessions are immutable. Appends facts to the provided session and
