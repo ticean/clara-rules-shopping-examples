@@ -18,7 +18,7 @@
 (defrecord Order [year month day shipping-address])
 (defrecord OrderLineItem [sku cost attributes])
 (defrecord OrderPromoCode [code])
-(defrecord OrderTotal [value])
+(defrecord OrderLineItemSubtotal [value])
 (defrecord OrderShippingSurchargeSubtotal [value])
 (defrecord ShippingMethod [id name label description rate group carrier attributes])
 (defrecord ShippingSurcharge [id label description cost sku])
@@ -47,20 +47,20 @@
 
 ;;;; Base rules and queries.
 
-(defrule order-total
+(defrule order-line-item-subtotal
   [?value <- (acc/sum :cost) :from [OrderLineItem]]
   =>
-  (insert! (->OrderTotal ?value)))
+  (insert! (->OrderLineItemSubtotal ?value)))
 
 (defrule shipping-surcharge-subtotal
   [?value <- (acc/sum :cost) :from [ShippingSurcharge]]
   =>
   (insert! (->OrderShippingSurchargeSubtotal ?value)))
 
-(defquery get-order-total
+(defquery get-order-line-item-subtotal
   "Query to find the order total."
   []
-  (?value <- OrderTotal))
+  (?value <- OrderLineItemSubtotal))
 
 (defquery get-order-shipping-surcharge-subtotal
   "Query to find the order surcharge subtotal."
@@ -123,8 +123,8 @@
   amount. If the configuration values are not set on the ShippingMethod then
   assume that the method applies on the missing range type.
 
-  WARNING: This is a naive implementation and uses the OrderTotal rather than
-  the total AFTER all other discounts and promotions are applied.
+  WARNING: This is a naive implementation and uses the OrderLineItemSubTotal
+  rather than the total AFTER all other discounts and promotions are applied.
 
   Assumes attributes which can be changed, of course.
 
@@ -135,7 +135,7 @@
    (= ?order-total-max (:order-total-max attributes))
    (if (number? ?order-total-min) (> ?value ?order-total-min) true)
    (if (number? ?order-total-max) (< ?value ?order-total-max) true)]
-  [OrderTotal (= ?value value)]
+  [OrderLineItemSubtotal (= ?value value)]
   =>
   (insert! (map->ActiveShippingMethod ?method)))
 

@@ -26,10 +26,12 @@
 (defn calculate
   "Reduces over the session to build a results maps."
   [session]
-  (let [order-total
-        (-> session (clara/query shopping/get-order-total) first :?value :value)
+  (let [order-line-item-subtotal
+        (-> session (clara/query shopping/get-order-line-item-subtotal)
+            first :?value :value)
         order-shipping-surcharge-subtotal
-        (-> session (clara/query shopping/get-order-shipping-surcharge-subtotal) first :?value :value)
+        (-> session (clara/query shopping/get-order-shipping-surcharge-subtotal)
+            first :?value :value)
         promotions
         (map :?promotion (clara/query session shopping/get-promotions))
         discounts
@@ -37,20 +39,16 @@
         active-shipping-methods
         (map :?active-shipping-method
              (clara/query session shopping/get-active-shipping-methods))
-        shipping-methods
-        (map :?shipping-method
-             (clara/query session shopping/get-shipping-methods))
         shipping-restrictions
         (map :?shipping-restriction
              (clara/query session shopping/get-shipping-restrictions))]
-    (-> {}
-      (assoc :order-total order-total)
-      (assoc :order-shipping-surcharge-subtotal order-shipping-surcharge-subtotal)
-      (assoc :promotions promotions)
-      (assoc :discounts discounts)
-      (assoc :active-shipping-methods active-shipping-methods)
-      (assoc :shipping-methods shipping-methods)
-      (assoc :shipping-restrictions shipping-restrictions))))
+    {:totals
+     {:order-line-item-subtotal order-line-item-subtotal
+      :order-shipping-surcharge-subtotal order-shipping-surcharge-subtotal}
+     :promotions promotions
+     :discounts discounts
+     :active-shipping-methods active-shipping-methods
+     :shipping-restrictions shipping-restrictions}))
 
 (defn base-session
   "Creates a base Clara session which includes common facts and rules."
