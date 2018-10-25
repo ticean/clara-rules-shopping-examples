@@ -7,7 +7,7 @@
   (:require
     [clara.rules.accumulators :as acc]
     [clara.rules :refer [defquery defrule fire-rules insert insert!
-                         mk-session query]]))
+                         mk-session query retract!]]))
 
 
 ;;;; Fact Types
@@ -19,9 +19,12 @@
 (defrecord OrderLineItem [sku cost attributes])
 (defrecord OrderPromoCode [code])
 (defrecord OrderTotal [value])
-(defrecord Promotion [code name description type config])
+(defrecord OrderShippingSurchargeSubtotal [value])
 (defrecord ShippingMethod [id name label description rate group carrier attributes])
+(defrecord ShippingSurcharge [id label description cost sku])
 (defrecord ShippingRestriction [sku code description])
+
+(defrecord Promotion [id name description promotional-class type config])
 
 
 (defn fact-record-type [m] (-> m :fact-type name symbol))
@@ -49,15 +52,30 @@
   =>
   (insert! (->OrderTotal ?value)))
 
+(defrule shipping-surcharge-subtotal
+  [?value <- (acc/sum :cost) :from [ShippingSurcharge]]
+  =>
+  (insert! (->OrderShippingSurchargeSubtotal ?value)))
+
 (defquery get-order-total
   "Query to find the order total."
   []
   (?value <- OrderTotal))
 
+(defquery get-order-shipping-surcharge-subtotal
+  "Query to find the order surcharge subtotal."
+  []
+  (?value <- OrderShippingSurchargeSubtotal))
+
 (defquery get-orders
   "Query to get all orders."
   []
   (?order <- Order))
+
+(defquery get-shipping-surcharges
+  "Query to get all shipping surcharges."
+  []
+  (?surcharge <- ShippingSurcharge))
 
 (defquery get-order-line-items
   "Query to get the order line items."
@@ -120,3 +138,32 @@
   [OrderTotal (= ?value value)]
   =>
   (insert! (map->ActiveShippingMethod ?method)))
+
+
+(defrule example-promotion-shipping-surcharge
+  [Customer (= "vip" status)]
+  =>
+  (insert! (->Promotion "remove-shipping-surcharges"
+                        ""
+                        "No charges on big items."
+                        "order"
+                        nil
+                        {})))
+
+(defrule add-shipping-surcharge
+  "Example of adding a surcharge to an item based on it's properties. Includes
+  rule that does not apply the surcharge when a promotion exists that removes
+  it."
+  [OrderLineItem (= ?surcharge (:shippingSurcharge attributes))
+   (number? ?surcharge)]
+  =>
+  (insert! (->ShippingSurcharge nil nil nil ?surcharge nil)))
+
+(defrule promotion-no-shipping-surcharge-when-customer-is-vip
+  "Example of adding a surcharge to an item based on it's properties. Includes
+  rule that does not apply the surcharge when a promotion exists that removes
+  it."
+  [Promotion (= "remove-shipping-surcharges" id)]
+  [?surcharge <- ShippingSurcharge]
+  =>
+  (retract! ?surcharge))
