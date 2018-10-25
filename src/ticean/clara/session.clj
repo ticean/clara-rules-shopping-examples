@@ -29,6 +29,9 @@
   (let [order-line-item-subtotal
         (-> session (clara/query shopping/get-order-line-item-subtotal)
             first :?value :value)
+        order-shipping-rate-subtotal
+        (-> session (clara/query shopping/get-order-shipping-rate-subtotal)
+            first :?value :value)
         order-shipping-surcharge-subtotal
         (-> session (clara/query shopping/get-order-shipping-surcharge-subtotal)
             first :?value :value)
@@ -50,7 +53,10 @@
              (clara/query session shopping/get-validation-errors))]
     {:totals
      {:order-line-item-subtotal order-line-item-subtotal
-      :order-shipping-surcharge-subtotal order-shipping-surcharge-subtotal}
+      :order-shipping-rate-subtotal order-shipping-rate-subtotal
+      :order-shipping-surcharge-subtotal order-shipping-surcharge-subtotal
+      :order-shipping-subtotal (+ order-shipping-rate-subtotal
+                                  order-shipping-surcharge-subtotal)}
      :promotions promotions
      :discounts discounts
      :active-shipping-methods active-shipping-methods

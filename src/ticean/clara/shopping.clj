@@ -18,6 +18,7 @@
 (defrecord OrderLineItem [sku cost attributes])
 (defrecord OrderPromoCode [code])
 (defrecord OrderLineItemSubtotal [value])
+(defrecord OrderShippingRateSubtotal [value])
 (defrecord OrderShippingSurchargeSubtotal [value])
 
 ; Shipping
@@ -55,20 +56,24 @@
 
 ;;;; Base rules and queries.
 
-(defrule order-line-item-subtotal
-  [?value <- (acc/sum :cost) :from [OrderLineItem]]
-  =>
-  (insert! (->OrderLineItemSubtotal ?value)))
+;; Accumulators
+(def max-discount
+  "Accumulator that returns the highest percentage discount."
+  ;; Note that this currently assumes percent!!
+  (acc/max :value :returns-fact true))
 
-(defrule shipping-surcharge-subtotal
-  [?value <- (acc/sum :cost) :from [ShippingSurcharge]]
-  =>
-  (insert! (->OrderShippingSurchargeSubtotal ?value)))
+
+;;Queries
 
 (defquery get-order-line-item-subtotal
   "Query to find the order total."
   []
   (?value <- OrderLineItemSubtotal))
+
+(defquery get-order-shipping-rate-subtotal
+  "Query to find the order shipping subtotal."
+  []
+  (?value <- OrderShippingRateSubtotal))
 
 (defquery get-order-shipping-surcharge-subtotal
   "Query to find the order surcharge subtotal."
@@ -89,11 +94,6 @@
   "Query to get the order line items."
   []
   (?order-line-item <- OrderLineItem))
-
-(def max-discount
-  "Accumulator that returns the highest percentage discount."
-  ;; Note that this currently assumes percent!!
-  (acc/max :value :returns-fact true))
 
 (defquery get-best-discount
   "Query to find the best discount that can be applied"
@@ -136,6 +136,22 @@
   [?error <- ValidationError])
 
 
+;; Rules
+
+(defrule order-line-item-subtotal
+  [?value <- (acc/sum :cost) :from [OrderLineItem]]
+  =>
+  (insert! (->OrderLineItemSubtotal ?value)))
+
+(defrule shipping-rate-subtotal
+  [?value <- (acc/sum :rate) :from [ValidatedShippingMethod]]
+  =>
+  (insert! (->OrderShippingRateSubtotal ?value)))
+
+(defrule shipping-surcharge-subtotal
+  [?value <- (acc/sum :cost) :from [ShippingSurcharge]]
+  =>
+  (insert! (->OrderShippingSurchargeSubtotal ?value)))
 
 (defrule add-validated-shipping-method
   "Ensures the selected shipping method is in the activated list. Adds a new
@@ -177,12 +193,17 @@
   =>
   (insert! (map->ActiveShippingMethod ?method)))
 
+
+
+
+;; Example Rules
+
 (defrule example-promotion-shipping-surcharge
   [Customer (= "vip" status)]
   =>
   (insert! (->Promotion "remove-shipping-surcharges"
                         ""
-                        "No charges on big items."
+                        "Big discounts for VIP customers. No shipping surcharges on big items."
                         "order"
                         nil
                         {})))
