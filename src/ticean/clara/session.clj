@@ -50,13 +50,16 @@
              (clara/query session shopping/get-shipping-restrictions))
         validation-errors
         (map :?error
-             (clara/query session shopping/get-validation-errors))]
+             (clara/query session shopping/get-validation-errors))
+        order-shipping-subtotal (+ order-shipping-rate-subtotal
+                                   order-shipping-surcharge-subtotal)]
     {:totals
      {:order-line-item-subtotal order-line-item-subtotal
       :order-shipping-rate-subtotal order-shipping-rate-subtotal
       :order-shipping-surcharge-subtotal order-shipping-surcharge-subtotal
-      :order-shipping-subtotal (+ order-shipping-rate-subtotal
-                                  order-shipping-surcharge-subtotal)}
+      :order-shipping-subtotal order-shipping-subtotal
+      :order-grand-total (+ order-line-item-subtotal
+                            order-shipping-subtotal)}
      :promotions promotions
      :discounts discounts
      :active-shipping-methods active-shipping-methods

@@ -194,9 +194,25 @@
   (insert! (map->ActiveShippingMethod ?method)))
 
 
-
-
 ;; Example Rules
+
+(defrule order-promotion-10-dollars-off
+  [Customer (= "vip" status)]
+  =>
+  (insert! (->Promotion "vip-customers-ten-dollars-off-order"
+                        "Ten Dollars Off Your Order"
+                        "Big discounts for VIP customers. Get $10 off any order."
+                        "order"
+                        nil
+                        {})))
+
+(defrule retract-virtual-giftcard-shipping-if-any-physical-products
+  "Retract the virtual giftcard shipping method if any physical products."
+  [OrderLineItem (not= "virtual-gift-card" sku) (= ?sku sku)]
+  [?shipping <- ShippingMethod
+   (= "virtual-giftcard-shipping" id)]
+  =>
+  (retract! (map->ShippingMethod ?shipping)))
 
 (defrule example-promotion-shipping-surcharge
   [Customer (= "vip" status)]
