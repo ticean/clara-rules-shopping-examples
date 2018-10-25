@@ -39,16 +39,24 @@
         active-shipping-methods
         (map :?active-shipping-method
              (clara/query session shopping/get-active-shipping-methods))
+        validated-shipping-method
+        (-> session (clara/query shopping/get-validated-shipping-methods)
+            first :?result)
         shipping-restrictions
         (map :?shipping-restriction
-             (clara/query session shopping/get-shipping-restrictions))]
+             (clara/query session shopping/get-shipping-restrictions))
+        validation-errors
+        (map :?error
+             (clara/query session shopping/get-validation-errors))]
     {:totals
      {:order-line-item-subtotal order-line-item-subtotal
       :order-shipping-surcharge-subtotal order-shipping-surcharge-subtotal}
      :promotions promotions
      :discounts discounts
      :active-shipping-methods active-shipping-methods
-     :shipping-restrictions shipping-restrictions}))
+     :validated-shipping-method validated-shipping-method
+     :shipping-restrictions shipping-restrictions
+     :validation-errors validation-errors}))
 
 (defn base-session
   "Creates a base Clara session which includes common facts and rules."

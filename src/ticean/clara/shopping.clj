@@ -12,7 +12,6 @@
 
 ;;;; Fact Types
 
-(defrecord ActiveShippingMethod [id name label description rate group carrier attributes])
 (defrecord Customer [status])
 (defrecord Discount [code name description type value])
 (defrecord Order [year month day shipping-address])
@@ -20,10 +19,18 @@
 (defrecord OrderPromoCode [code])
 (defrecord OrderLineItemSubtotal [value])
 (defrecord OrderShippingSurchargeSubtotal [value])
+
+; Shipping
+(defrecord ActiveShippingMethod [id name label description rate group carrier attributes])
 (defrecord ShippingMethod [id name label description rate group carrier attributes])
 (defrecord ShippingSurcharge [id label description cost sku])
 (defrecord ShippingRestriction [sku code description])
+(defrecord SelectedShippingMethod [id])
+(defrecord ValidatedShippingMethod [id name label description rate group carrier attributes])
 
+(defrecord ValidationError [id description data])
+
+; Promotions
 (defrecord Promotion [id name description promotional-class type config])
 
 
@@ -32,7 +39,7 @@
 (defmulti ->fact-record
   "Converts a map representing a fact to a fact Record. Note that not all facts
   are insertable because they should be inferred by Clara."
-  (fn [m] (fact-record-type m)))
+  fact-record-type)
 
 (defmethod ->fact-record 'Customer [m] (map->Customer m))
 (defmethod ->fact-record 'Discount [m] (map->Discount m))
@@ -40,6 +47,7 @@
 (defmethod ->fact-record 'OrderLineItem [m] (map->OrderLineItem m))
 (defmethod ->fact-record 'OrderPromoCode [m] (map->OrderPromoCode m))
 (defmethod ->fact-record 'ShippingMethod [m] (map->ShippingMethod m))
+(defmethod ->fact-record 'SelectedShippingMethod [m] (map->SelectedShippingMethod m))
 (defmethod ->fact-record :default [m]
   (throw (ex-info "Unknown fact type"
                   {:input-type (fact-record-type m)
@@ -117,6 +125,36 @@
   []
   [?shipping-restriction <- ShippingRestriction])
 
+(defquery get-validated-shipping-methods
+  "Query to find all validated shipping methods."
+  []
+  [?result <- ValidatedShippingMethod])
+
+(defquery get-validation-errors
+  "Query to find all validation errors."
+  []
+  [?error <- ValidationError])
+
+
+
+(defrule add-validated-shipping-method
+  "Ensures the selected shipping method is in the activated list. Adds a new
+  fact with the complete active method."
+  [SelectedShippingMethod (= ?selected-id id)]
+  [?validated <- ActiveShippingMethod (= ?selected-id id)]
+  =>
+  (insert! (map->ValidatedShippingMethod ?validated)))
+
+(defrule add-validation-error-on-invalid-selection
+  "Inserts a ValidationError if the shipping method is not in the activated
+  list."
+  [?selected <- SelectedShippingMethod (= ?selected-id id)]
+  [:not [ActiveShippingMethod (= ?selected-id id)]]
+  =>
+  (insert! (->ValidationError
+             "invalid-selected-shipping-method"
+             "The selected shipping method is not valid."
+             {:selected ?selected})))
 
 (defrule activate-shipping-by-order-total-limits
   "Activates shipping methods that conform to min and max of the total order
@@ -138,7 +176,6 @@
   [OrderLineItemSubtotal (= ?value value)]
   =>
   (insert! (map->ActiveShippingMethod ?method)))
-
 
 (defrule example-promotion-shipping-surcharge
   [Customer (= "vip" status)]
