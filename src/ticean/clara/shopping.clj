@@ -214,7 +214,7 @@
   [?shipping <- ShippingMethod
    (= "virtual-giftcard-shipping" id)]
   =>
-  (retract! (map->ShippingMethod ?shipping)))
+  (retract! (map->ActiveShippingMethod ?shipping)))
 
 (defrule example-promotion-shipping-surcharge
   [Customer (= "vip" status)]
