@@ -9,7 +9,7 @@
     [ticean.clara.shopping :as shopping])
   (:import
     [ticean.clara.shopping ActiveShippingMethod Customer Order OrderPromoCode
-       OrderLineItem OrderTotal Discount Promotion ShippingMethod
+       OrderLineItem OrderLineItemSubtotal Discount Promotion ShippingMethod
        ShippingRestriction]))
 
 (defn shopping-grammar
@@ -45,7 +45,7 @@
   {"customer" Customer
    "order" Order
    "order_line_item" OrderLineItem
-   "order_total" OrderTotal
+   "order_line_item_subtotal" OrderLineItemSubtotal
    "shipping_restriction" ShippingRestriction})
 
 (def shopping-transforms

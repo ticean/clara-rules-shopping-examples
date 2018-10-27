@@ -6,7 +6,7 @@
     [ticean.clara.shopping :as shopping])
   (:import
     [ticean.clara.shopping ActiveShippingMethod Customer Order OrderPromoCode
-       OrderLineItem OrderTotal Discount Promotion ShippingMethod
+       OrderLineItem OrderLineItemSubtotal Discount Promotion ShippingMethod
        ShippingRestriction]))
 
 (defn print-parsed-rules [rules print?]
