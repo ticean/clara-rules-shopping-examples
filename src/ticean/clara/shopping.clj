@@ -14,7 +14,7 @@
 
 (defrecord Customer [status])
 (defrecord Discount [code name description type value])
-(defrecord Order [year month day shipping-address])
+(defrecord Order [timestamp shipping-address])
 (defrecord OrderLineItem [sku cost attributes])
 (defrecord OrderPromoCode [code])
 (defrecord OrderLineItemSubtotal [value])
