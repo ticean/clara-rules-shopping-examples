@@ -20,8 +20,11 @@
 (defrecord OrderLineItemSubtotal [value])
 (defrecord OrderShippingRateSubtotal [value])
 (defrecord OrderShippingSurchargeSubtotal [value])
+(defrecord ShippingAddress [name address1 address2 city company phone region
+                            postal country is-commercial is-billing-default
+                            is-shipping-default metafields])
 
-; Shipping
+; Shipping Methods
 (defrecord ActiveShippingMethod [id name label description rate group carrier attributes])
 (defrecord ShippingMethod [id name label description rate group carrier attributes])
 (defrecord ShippingSurcharge [id label description cost sku])
@@ -49,6 +52,7 @@
 (defmethod ->fact-record 'Order [m] (map->fact-type m map->Order))
 (defmethod ->fact-record 'OrderLineItem [m] (map->fact-type m map->OrderLineItem))
 (defmethod ->fact-record 'OrderPromoCode [m] (map->fact-type m map->OrderPromoCode))
+(defmethod ->fact-record 'ShippingAddress [m] (map->fact-type m map->ShippingAddress))
 (defmethod ->fact-record 'ShippingMethod [m] (map->fact-type m map->ShippingMethod))
 (defmethod ->fact-record 'SelectedShippingMethod [m] (map->fact-type m map->SelectedShippingMethod))
 (defmethod ->fact-record :default [m]

@@ -9,8 +9,8 @@
     [ticean.clara.shopping :as shopping])
   (:import
     [ticean.clara.shopping ActiveShippingMethod Customer Order OrderPromoCode
-       OrderLineItem OrderLineItemSubtotal Discount Promotion ShippingMethod
-       ShippingRestriction]))
+       OrderLineItem OrderLineItemSubtotal Discount Promotion ShippingAddress
+       ShippingMethod ShippingRestriction]))
 
 (defn shopping-grammar
   []
@@ -27,7 +27,7 @@
     <STRING> = #'[A-Za-z][A-Za-z0-9_-]+' ;
     <QUOTED_STRING> = #'[A-Za-z][A-Za-z0-9_-]+' ;
     CONDITION = FACTTYPE<'.'>FIELDS OPERATOR VALUE ;
-    FACTTYPE = 'customer' | 'order' | 'order_total' | 'order_line_item' ;
+    FACTTYPE = 'customer' | 'order' | 'order_total' | 'order_line_item' | 'shipping_address' ;
     FIELDS = FIELD[<'.'>FIELD]* ;
     <FIELD> = STRING ;
     OPERATOR = 'is' | '>' | '<' | '=' ;
@@ -46,6 +46,7 @@
    "order" Order
    "order_line_item" OrderLineItem
    "order_line_item_subtotal" OrderLineItemSubtotal
+   "shipping_address" ShippingAddress
    "shipping_restriction" ShippingRestriction})
 
 (def shopping-transforms
