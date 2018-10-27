@@ -3,8 +3,8 @@
   (:require
     [clara.rules :as clara]
     [clara.tools.inspect :as inspect]
-    [ticean.clara.facts :as facts]
-    [ticean.clara.shopping :as shopping])
+    [ticean.clara.base-rules :as base-rules]
+    [ticean.clara.example-rules :as example-rules])
   (:import
     [ticean.clara.facts ActiveShippingMethod Customer Order OrderPromoCode
        OrderLineItem OrderLineItemSubtotal Discount Promotion ShippingMethod
@@ -28,30 +28,31 @@
   "Reduces over the session to build a results maps."
   [session]
   (let [order-line-item-subtotal
-        (-> session (clara/query shopping/get-order-line-item-subtotal)
+        (-> session (clara/query base-rules/get-order-line-item-subtotal)
             first :?value :value)
         order-shipping-rate-subtotal
-        (-> session (clara/query shopping/get-order-shipping-rate-subtotal)
+        (-> session (clara/query base-rules/get-order-shipping-rate-subtotal)
             first :?value :value)
         order-shipping-surcharge-subtotal
-        (-> session (clara/query shopping/get-order-shipping-surcharge-subtotal)
+        (-> session
+            (clara/query base-rules/get-order-shipping-surcharge-subtotal)
             first :?value :value)
         promotions
-        (map :?promotion (clara/query session shopping/get-promotions))
+        (map :?promotion (clara/query session base-rules/get-promotions))
         discounts
-        (map :?discount (clara/query session shopping/get-all-discounts))
+        (map :?discount (clara/query session base-rules/get-all-discounts))
         active-shipping-methods
         (map :?active-shipping-method
-             (clara/query session shopping/get-active-shipping-methods))
+             (clara/query session base-rules/get-active-shipping-methods))
         validated-shipping-method
-        (-> session (clara/query shopping/get-validated-shipping-methods)
+        (-> session (clara/query base-rules/get-validated-shipping-methods)
             first :?result)
         shipping-restrictions
         (map :?shipping-restriction
-             (clara/query session shopping/get-shipping-restrictions))
+             (clara/query session base-rules/get-shipping-restrictions))
         validation-errors
         (map :?error
-             (clara/query session shopping/get-validation-errors))
+             (clara/query session base-rules/get-validation-errors))
         order-shipping-subtotal (+ order-shipping-rate-subtotal
                                    order-shipping-surcharge-subtotal)]
     {:totals
@@ -72,7 +73,8 @@
   "Creates a base Clara session which includes common facts and rules."
   [facts rules]
   (-> (clara/mk-session 'ticean.clara.parser
-                        'ticean.clara.shopping
+                        'ticean.clara.base-rules
+                        'ticean.clara.example-rules
                         rules)
       (clara/insert-all facts)
       (clara/fire-rules)))
