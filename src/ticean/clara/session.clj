@@ -3,9 +3,10 @@
   (:require
     [clara.rules :as clara]
     [clara.tools.inspect :as inspect]
+    [ticean.clara.facts :as facts]
     [ticean.clara.shopping :as shopping])
   (:import
-    [ticean.clara.shopping ActiveShippingMethod Customer Order OrderPromoCode
+    [ticean.clara.facts ActiveShippingMethod Customer Order OrderPromoCode
        OrderLineItem OrderLineItemSubtotal Discount Promotion ShippingMethod
        ShippingRestriction]))
 

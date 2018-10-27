@@ -6,10 +6,10 @@
     [duct.logger :refer [log]]
     [integrant.core :as ig]
     [ticean.clara :as engine]
-    [ticean.clara.shopping :as shopping]))
+    [ticean.clara.facts :as facts]))
 
 (defmethod ig/init-key :ticean.clara.handler/index
   [_ {:keys [engine]}]
   (fn [{[_ payload] :ataraxy/result}]
-    (let [facts (map shopping/->fact-record payload)]
+    (let [facts (map facts/->fact-record payload)]
       [::response/ok (engine/query-session engine facts)])))

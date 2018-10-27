@@ -6,9 +6,9 @@
   "
   (:require
     [instaparse.core :as insta]
-    [ticean.clara.shopping :as shopping])
+    [ticean.clara.facts :as facts])
   (:import
-    [ticean.clara.shopping ActiveShippingMethod Customer Order OrderPromoCode
+    [ticean.clara.facts ActiveShippingMethod Customer Order OrderPromoCode
        OrderLineItem OrderLineItemSubtotal Discount Promotion ShippingAddress
        ShippingMethod ShippingRestriction]))
 
@@ -70,22 +70,24 @@
                {:name name
                 :lhs conditions
                 :rhs `(clara.rules/insert!
-                        (shopping/->Discount ~name ~name nil :percent
-                                             ~percent))})
+                        (facts/->Discount ~name ~name nil :percent ~percent))})
 
    :PROMOTION (fn [name promotion-type & conditions]
                 {:name name
                  :lhs conditions
                  :rhs `(clara.rules/insert!
-                         (shopping/->Promotion ~name ~name ~'fact :percent ~name
-                                               {}))})
+                         (facts/->Promotion ~name ~name ~'fact :percent ~name
+                                            {}))})
 
    :SHIPPING_RESTRICTION
    ; NOTE: See the example of pulling the ?fact symbol from the lhs.
    (fn [name description & conditions]
      {:name name
       :lhs conditions
-      :rhs `(clara.rules/insert! (shopping/->ShippingRestriction (:sku ~'?fact) ~name ~description))})})
+      :rhs `(clara.rules/insert!
+              (facts/->ShippingRestriction (:sku ~'?fact)
+                                           ~name
+                                           ~description))})})
 
 (defn load-user-rules
   "Converts a business rule string into Clara productions."

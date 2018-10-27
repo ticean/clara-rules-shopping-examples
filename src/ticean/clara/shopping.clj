@@ -7,58 +7,26 @@
   (:require
     [clara.rules.accumulators :as acc]
     [clara.rules :refer [defquery defrule fire-rules insert insert!
-                         mk-session query retract!]]))
+                         mk-session query retract!]]
+    [ticean.clara.facts :as facts])
+  (:import
+    [ticean.clara.facts ActiveShippingMethod
+                        Customer
+                        Discount
+                        Order
+                        OrderLineItem
+                        OrderLineItemSubtotal
+                        OrderPromoCode
+                        OrderShippingRateSubtotal
+                        OrderShippingSurchargeSubtotal
+                        Promotion
+                        SelectedShippingMethod
+                        ShippingMethod
+                        ShippingRestriction
+                        ShippingSurcharge
+                        ValidatedShippingMethod
+                        ValidationError]))
 
-
-;;;; Fact Types
-
-(defrecord Customer [status])
-(defrecord Discount [code name description type value])
-(defrecord Order [timestamp shipping-address])
-(defrecord OrderLineItem [sku cost attributes])
-(defrecord OrderPromoCode [code])
-(defrecord OrderLineItemSubtotal [value])
-(defrecord OrderShippingRateSubtotal [value])
-(defrecord OrderShippingSurchargeSubtotal [value])
-(defrecord ShippingAddress [name address1 address2 city company phone region
-                            postal country is-commercial is-billing-default
-                            is-shipping-default metafields])
-
-; Shipping Methods
-(defrecord ActiveShippingMethod [id name label description rate group carrier attributes])
-(defrecord ShippingMethod [id name label description rate group carrier attributes])
-(defrecord ShippingSurcharge [id label description cost sku])
-(defrecord ShippingRestriction [sku code description])
-(defrecord SelectedShippingMethod [id])
-(defrecord ValidatedShippingMethod [id name label description rate group carrier attributes])
-
-(defrecord ValidationError [id description data])
-
-; Promotions
-(defrecord Promotion [id name description promotional-class type config])
-
-
-(defn fact-record-type [m] (-> m :fact-type name symbol))
-(defn- map->fact-type [m conversion-fn]
-  (-> m conversion-fn (dissoc :fact-type)))
-
-(defmulti ->fact-record
-  "Converts a map representing a fact to a fact Record. Note that not all facts
-  are insertable because they should be inferred by Clara."
-  fact-record-type)
-
-(defmethod ->fact-record 'Customer [m] (map->fact-type m map->Customer))
-(defmethod ->fact-record 'Discount [m] (map->fact-type m map->Discount))
-(defmethod ->fact-record 'Order [m] (map->fact-type m map->Order))
-(defmethod ->fact-record 'OrderLineItem [m] (map->fact-type m map->OrderLineItem))
-(defmethod ->fact-record 'OrderPromoCode [m] (map->fact-type m map->OrderPromoCode))
-(defmethod ->fact-record 'ShippingAddress [m] (map->fact-type m map->ShippingAddress))
-(defmethod ->fact-record 'ShippingMethod [m] (map->fact-type m map->ShippingMethod))
-(defmethod ->fact-record 'SelectedShippingMethod [m] (map->fact-type m map->SelectedShippingMethod))
-(defmethod ->fact-record :default [m]
-  (throw (ex-info "Unknown fact type"
-                  {:input-type (fact-record-type m)
-                   :input m})))
 
 ;;;; Base rules and queries.
 
@@ -147,17 +115,17 @@
 (defrule order-line-item-subtotal
   [?value <- (acc/sum :cost) :from [OrderLineItem]]
   =>
-  (insert! (->OrderLineItemSubtotal ?value)))
+  (insert! (facts/->OrderLineItemSubtotal ?value)))
 
 (defrule shipping-rate-subtotal
   [?value <- (acc/sum :rate) :from [ValidatedShippingMethod]]
   =>
-  (insert! (->OrderShippingRateSubtotal ?value)))
+  (insert! (facts/->OrderShippingRateSubtotal ?value)))
 
 (defrule shipping-surcharge-subtotal
   [?value <- (acc/sum :cost) :from [ShippingSurcharge]]
   =>
-  (insert! (->OrderShippingSurchargeSubtotal ?value)))
+  (insert! (facts/->OrderShippingSurchargeSubtotal ?value)))
 
 (defrule add-validated-shipping-method
   "Ensures the selected shipping method is in the activated list. Adds a new
@@ -165,7 +133,7 @@
   [SelectedShippingMethod (= ?selected-id id)]
   [?validated <- ActiveShippingMethod (= ?selected-id id)]
   =>
-  (insert! (map->ValidatedShippingMethod ?validated)))
+  (insert! (facts/map->ValidatedShippingMethod ?validated)))
 
 (defrule add-validation-error-on-invalid-selection
   "Inserts a ValidationError if the shipping method is not in the activated
@@ -173,7 +141,7 @@
   [?selected <- SelectedShippingMethod (= ?selected-id id)]
   [:not [ActiveShippingMethod (= ?selected-id id)]]
   =>
-  (insert! (->ValidationError
+  (insert! (facts/->ValidationError
              "invalid-selected-shipping-method"
              "The selected shipping method is not valid."
              {:selected ?selected})))
@@ -197,7 +165,7 @@
    (if (number? ?order-total-max) (< ?value ?order-total-max) true)]
   [OrderLineItemSubtotal (= ?value value)]
   =>
-  (insert! (map->ActiveShippingMethod ?method)))
+  (insert! (facts/map->ActiveShippingMethod ?method)))
 
 
 ;; Example Rules
@@ -205,12 +173,13 @@
 (defrule order-promotion-10-dollars-off
   [Customer (= "vip" status)]
   =>
-  (insert! (->Promotion "vip-customers-ten-dollars-off-order"
-                        "Ten Dollars Off Your Order"
-                        "Big discounts for VIP customers. Get $10 off any order."
-                        "order"
-                        nil
-                        {})))
+  (insert! (facts/->Promotion
+             "vip-customers-ten-dollars-off-order"
+             "Ten Dollars Off Your Order"
+             "Big discounts for VIP customers. Get $10 off any order."
+             "order"
+             nil
+             {})))
 
 (defrule retract-virtual-giftcard-shipping-if-any-physical-products
   "Retract the virtual giftcard shipping method if any physical products."
@@ -218,17 +187,18 @@
   [?shipping <- ShippingMethod
    (= "virtual-giftcard-shipping" id)]
   =>
-  (retract! (map->ActiveShippingMethod ?shipping)))
+  (retract! (facts/map->ActiveShippingMethod ?shipping)))
 
 (defrule example-promotion-shipping-surcharge
   [Customer (= "vip" status)]
   =>
-  (insert! (->Promotion "remove-shipping-surcharges"
-                        ""
-                        "Big discounts for VIP customers. No shipping surcharges on big items."
-                        "order"
-                        nil
-                        {})))
+  (insert! (facts/->Promotion
+             "remove-shipping-surcharges"
+             ""
+             "Big discounts for VIP customers. No shipping surcharges on big items."
+             "order"
+             nil
+             {})))
 
 (defrule add-shipping-surcharge
   "Example of adding a surcharge to an item based on it's properties. Includes
@@ -237,7 +207,7 @@
   [OrderLineItem (= ?surcharge (:shippingSurcharge attributes))
    (number? ?surcharge)]
   =>
-  (insert! (->ShippingSurcharge nil nil nil ?surcharge nil)))
+  (insert! (facts/->ShippingSurcharge nil nil nil ?surcharge nil)))
 
 (defrule promotion-no-shipping-surcharge-when-customer-is-vip
   "Example of adding a surcharge to an item based on it's properties. Includes

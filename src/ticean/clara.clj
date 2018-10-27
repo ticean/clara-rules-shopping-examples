@@ -5,7 +5,7 @@
     [clojure.java.io :as io]
     [integrant.core :as ig]
     [ticean.clara.session :as session]
-    [ticean.clara.shopping :as shopping]
+    [ticean.clara.facts :as facts]
     [ticean.clara.parser :as parser]))
 
 (defprotocol IEngine
@@ -32,7 +32,7 @@
 (defmethod ig/init-key ::engine
   [_  {config :config}]
   (let [{:keys [base-facts base-rules]} config
-        facts   (map shopping/->fact-record base-facts)
+        facts   (map facts/->fact-record base-facts)
         rules   (parser/load-user-rules base-rules)
         session (session/base-session facts rules)]
     (->Engine facts rules session)))
