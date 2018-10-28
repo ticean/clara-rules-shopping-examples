@@ -23,7 +23,7 @@
 
   (defrecord MyRecord [arg1 arg2 etc])
   (defmethod ->fact-record \"MyRecord\" [m] (map->MyRecord m))"
-  [name params & ancestors]
+  [name params]
   (when (not (instance? clojure.lang.Symbol name))
     (throw (IllegalArgumentException.
              "First argument to deffact must be a symbol")))
