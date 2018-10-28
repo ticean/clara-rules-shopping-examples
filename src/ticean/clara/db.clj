@@ -4,7 +4,7 @@
     [clojure.edn :as edn]
     [clojure.java.io :as io]
     [integrant.core :as ig]
-    [ticean.clara.facts :as facts]))
+    [ticean.clara.fact :as fact]))
 
 (defprotocol FactDatastore
   "Facts storage abstraction."
@@ -18,7 +18,7 @@
   (load-facts [this]
     (let [file (:resource-file config)
           data (-> file io/resource slurp edn/read-string)]
-      (doall (map facts/->fact-record data)))))
+      (doall (map fact/->fact-record data)))))
 
 (defmethod ig/init-key ::edn-fact-datastore
   [_ {:keys [config]}]
