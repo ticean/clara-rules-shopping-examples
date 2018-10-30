@@ -9,14 +9,76 @@ The original examples can be found at https://github.com/cerner/clara-examples
 
 ## Usage
 
-The project contains interactive Clara Rules examples that are intended to run
-from the REPL.
-
-Example, from REPL:
-
-```clojure
-(require '[ticean.clara.shopping :as s])
-(s/run-examples)
+```
+curl --request POST \
+  --url http://localhost:3000/ \
+  --header 'content-type: application/json' \
+  --data '[
+	{
+		"fact-type": "Customer",
+		"status": "vip"
+	},
+	{
+		"fact-type": "ShippingAddress",
+		"name": "",
+		"address1": "",
+		"address2": "",
+		"city": "",
+		"company": "",
+		"phone": "",
+		"region": "",
+		"postal": "",
+		"country": "ca",
+		"is-commercial": "",
+		"is-billing-default": true,
+		"is-shipping-default": true,
+		"metafields": []
+	},
+	{
+		"fact-type": "SelectedShippingMethod",
+		"id": "free"
+	},
+	{
+		"fact-type": "Order",
+		"timestamp": "2018-10-30T01:37:23.425Z",
+		"attributes": {
+		}
+	},
+	{
+		"fact-type": "OrderLineItem",
+		"sku": "foo",
+		"cost": 4,
+		"attributes": {
+			"brand": "Foomakers"
+		}
+	},
+	{
+		"fact-type": "OrderLineItem",
+		"sku": "fizzbuzz",
+		"cost": 10,
+		"attributes": {
+			"flammable": true
+		}
+	},
+	{
+		"fact-type": "OrderLineItem",
+		"sku": "firecracker",
+		"cost": 1,
+		"attributes": {
+			"isExplosive": "kaboom",
+			"shippingSurcharge": 50
+		}
+	},
+	{
+		"fact-type": "OrderLineItem",
+		"sku": "north-face-jacket",
+		"cost": 250.00,
+		"attributes": {
+			"brand": "NorthFace",
+			"shippingSurcharge": 0
+		}
+	}
+])'
 ```
 
 ### The REPL Environment
